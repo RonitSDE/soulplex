@@ -1,0 +1,22 @@
+# Fifteen days from code to credible pilot evidence
+
+These are execution targets, not a funding or partner-acquisition forecast. Appoint one product owner, one full-stack engineer, one operator responsible for member care and one founder responsible for recruitment/fundraising. Use one city for the first sufficiently dense matching pool; expand to the second after the first flow works with people.
+
+| Days  | Engineering                                                                                                                                          | Founder / operations                                                                                                     | Exit evidence                                                                           |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| 1–2   | Run supplied code from a clean checkout; staging domain, PostgreSQL, secrets and worker; reproduce tests and browser/device checks                   | Decide first local cohort, intended relationship use, real support channel and adult eligibility procedure               | Recorded two-account live staging walkthrough; owner for every launch gap               |
+| 3–4   | Test model candidates with the same fictional English/Hinglish fixtures; refusal/error/cost logging without private text; fix unsupported statements | Interview 8–10 consenting target users about current discovery fatigue and willingness to delegate introductions         | Written objections and corrections, model evaluation, no invented demand claims         |
+| 5–6   | Test real email delivery, reset links and one-use invites; add operator MFA/session protection, privacy notices and critical staging fixes           | Secure consent for a small adult cohort; check reciprocal availability and preferences rather than raw waitlist size     | Enough eligible counterpart options for each participant, support process rehearsed     |
+| 7–9   | Observe onboarding; fix memory accuracy, broken flows and worker failures; no unnecessary new venues                                                 | Run a tightly supervised cohort; collect opt-in usability notes and representation feedback                              | Actual activation and correction data, time/cost observations                           |
+| 10–12 | Improve only measured friction; record current mutually accepted unique pairs and outcomes                                                           | Facilitate introductions through the member-approved channel; do short follow-ups with consent                           | Real conversation evidence, reasons for rejection/dropout, no claim of verified romance |
+| 13–15 | Freeze demo release, reproduce deployment, archive QA results, rehearse recovery                                                                     | Assemble investor demo, evidence sheet, interview findings and milestone-based use of funds; approach relevant investors | A credible pilot package and next-experiment decision, whether or not funding closes    |
+
+## Ship later, after the basic loop is useful
+
+Video highlight reels, bookings, payments, social imports and elaborate autonomous world simulation should follow evidence that users trust the representative and want the introduction. Adding these now would introduce more provider cost and personal-data dependencies without proving the central value.
+
+Test a transparent paid service only after demonstrated usefulness: for example a clearly scoped discovery period with a stated limit and support level. Do not charge merely to unlock information a person has already consented to disclose, and never sell private memory. Billing is not part of version 0.4.1.
+
+## Stop or change direction when
+
+People cannot recognize themselves in their representative; they feel pressured to share; the pool cannot provide reciprocal choices; many agent scenes produce no human participation; support/cost per introduction cannot be justified; or the experience adds more work than it removes. Capture those observations early rather than optimizing only sign-up numbers.

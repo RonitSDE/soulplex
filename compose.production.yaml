@@ -1,0 +1,56 @@
+name: soulplex-live
+x-app: &app
+  build: .
+  image: soulplex:0.5.0
+  env_file: .env
+  environment:
+    APP_ENV: production
+    DEMO_MODE: "false"
+    DATABASE_URL: postgresql+psycopg://soulplex:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/soulplex
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: soulplex
+      POSTGRES_USER: soulplex
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: [soulplex_postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U soulplex"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+  api:
+    <<: *app
+    expose: ["8000"]
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  worker:
+    <<: *app
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      api: {condition: service_healthy}
+  edge:
+    image: caddy:2-alpine
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+    ports: ["80:80", "443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data", "caddy_config:/config"]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  soulplex_postgres:
+  caddy_data:
+  caddy_config:

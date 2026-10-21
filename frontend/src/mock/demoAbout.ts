@@ -1,0 +1,522 @@
+/* Generated from backend/app/demo_about.py */
+import type { About } from "../about";
+export const DEMO_ABOUT: Record<string, About> = {
+ "maya": {
+  "pronouns": "she",
+  "height_cm": 165,
+  "hometown": "Pune",
+  "job": "a product designer",
+  "education": "masters",
+  "languages": [
+   "English",
+   "Hindi",
+   "Marathi"
+  ],
+  "marital": "never_married",
+  "children": "none",
+  "timeline": "one_two_years",
+  "relocate": "maybe",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "vegetarian",
+  "exercise": "sometimes",
+  "sleep": "early_bird",
+  "pets": "love",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time",
+   "words"
+  ],
+  "prompts": [
+   {
+    "id": "sunday",
+    "answer": "Farmers market, a long lunch with friends, then a new book by the water."
+   },
+   {
+    "id": "green",
+    "answer": "You remember the small things people tell you."
+   }
+  ]
+ },
+ "arjun": {
+  "pronouns": "he",
+  "height_cm": 178,
+  "hometown": "Bengaluru",
+  "job": "a photographer",
+  "education": "bachelors",
+  "languages": [
+   "English",
+   "Hindi",
+   "Kannada"
+  ],
+  "marital": "never_married",
+  "children": "none",
+  "family_plans": "want",
+  "timeline": "one_two_years",
+  "relocate": "no",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "non_veg",
+  "exercise": "often",
+  "sleep": "early_bird",
+  "pets": "love",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time",
+   "acts"
+  ],
+  "prompts": [
+   {
+    "id": "hours",
+    "answer": "Light. Golden hour, street photography, why old film looks the way it does."
+   },
+   {
+    "id": "win",
+    "answer": "Suggest a walk to somewhere neither of us has been."
+   }
+  ]
+ },
+ "priya": {
+  "pronouns": "she",
+  "height_cm": 160,
+  "job": "a chef",
+  "languages": [
+   "English",
+   "Hindi",
+   "Punjabi"
+  ],
+  "family_plans": "want",
+  "timeline": "within_year",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "vegetarian",
+  "religion": "sikh",
+  "religion_importance": "very",
+  "love_languages": [
+   "acts"
+  ]
+ },
+ "rohan": {
+  "pronouns": "he",
+  "height_cm": 180,
+  "job": "an architect",
+  "languages": [
+   "English",
+   "Hindi"
+  ],
+  "family_plans": "want",
+  "timeline": "within_year",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "eggetarian",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time"
+  ]
+ },
+ "karan": {
+  "pronouns": "he",
+  "height_cm": 175,
+  "hometown": "Jaipur",
+  "job": "a teacher",
+  "education": "masters",
+  "languages": [
+   "English",
+   "Hindi"
+  ],
+  "marital": "never_married",
+  "family_plans": "want",
+  "timeline": "one_two_years",
+  "relocate": "maybe",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "vegetarian",
+  "exercise": "sometimes",
+  "sleep": "early_bird",
+  "pets": "love",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time",
+   "words"
+  ],
+  "prompts": [
+   {
+    "id": "learning",
+    "answer": "Urdu poetry, slowly, one ghazal at a time."
+   },
+   {
+    "id": "argue",
+    "answer": "Make two cups of chai and talk it through the same evening."
+   }
+  ]
+ },
+ "omar": {
+  "pronouns": "he",
+  "height_cm": 182,
+  "hometown": "Sharjah",
+  "job": "a civil engineer",
+  "education": "bachelors",
+  "languages": [
+   "Arabic",
+   "English",
+   "Urdu"
+  ],
+  "family_plans": "want",
+  "timeline": "within_year",
+  "relocate": "no",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "halal",
+  "exercise": "often",
+  "sleep": "early_bird",
+  "religion": "muslim",
+  "religion_importance": "very",
+  "love_languages": [
+   "acts",
+   "time"
+  ],
+  "prompts": [
+   {
+    "id": "family",
+    "answer": "Loud, loyal and always the one who organises the weekend."
+   }
+  ]
+ },
+ "daniel": {
+  "pronouns": "he",
+  "height_cm": 185,
+  "hometown": "Lisbon",
+  "job": "a furniture designer",
+  "languages": [
+   "English",
+   "French"
+  ],
+  "family_plans": "not_sure",
+  "timeline": "when_right",
+  "relocate": "yes",
+  "drinking": "socially",
+  "smoking": "sometimes",
+  "diet": "anything",
+  "sleep": "night_owl",
+  "religion": "not_religious",
+  "love_languages": [
+   "gifts",
+   "touch"
+  ],
+  "prompts": [
+   {
+    "id": "together",
+    "answer": "You like long dinners where nobody checks the time."
+   }
+  ]
+ },
+ "vikram": {
+  "pronouns": "he",
+  "height_cm": 179,
+  "hometown": "Amritsar",
+  "job": "a finance manager",
+  "education": "masters",
+  "languages": [
+   "English",
+   "Hindi",
+   "Punjabi"
+  ],
+  "family_plans": "open",
+  "timeline": "one_two_years",
+  "relocate": "maybe",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "non_veg",
+  "exercise": "sometimes",
+  "sleep": "early_bird",
+  "religion": "sikh",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "words",
+   "time"
+  ],
+  "prompts": [
+   {
+    "id": "win",
+    "answer": "Laugh at my terrible cricket commentary."
+   }
+  ]
+ },
+ "sara": {
+  "pronouns": "she",
+  "height_cm": 168,
+  "hometown": "Beirut",
+  "job": "an illustrator",
+  "languages": [
+   "Arabic",
+   "English",
+   "French"
+  ],
+  "family_plans": "open",
+  "timeline": "when_right",
+  "relocate": "yes",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "anything",
+  "sleep": "night_owl",
+  "religion": "spiritual",
+  "love_languages": [
+   "gifts",
+   "time"
+  ],
+  "prompts": [
+   {
+    "id": "sunday",
+    "answer": "Drive somewhere with mountains, sketchbook on the passenger seat."
+   }
+  ]
+ },
+ "leila": {
+  "pronouns": "she",
+  "height_cm": 163,
+  "hometown": "Dubai",
+  "job": "a university librarian",
+  "education": "masters",
+  "languages": [
+   "Arabic",
+   "English"
+  ],
+  "family_plans": "want",
+  "timeline": "within_year",
+  "relocate": "no",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "halal",
+  "sleep": "early_bird",
+  "religion": "muslim",
+  "religion_importance": "very",
+  "love_languages": [
+   "words",
+   "time"
+  ],
+  "dealbreakers": [
+   "smoking",
+   "drinking"
+  ],
+  "prompts": [
+   {
+    "id": "hours",
+    "answer": "Mahmoud Darwish, and why some poems feel like home."
+   }
+  ]
+ },
+ "ananya": {
+  "pronouns": "she",
+  "height_cm": 162,
+  "hometown": "Kochi",
+  "job": "a data scientist",
+  "education": "masters",
+  "languages": [
+   "English",
+   "Malayalam",
+   "Hindi"
+  ],
+  "marital": "never_married",
+  "family_plans": "want",
+  "timeline": "one_two_years",
+  "relocate": "no",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "eggetarian",
+  "exercise": "often",
+  "sleep": "early_bird",
+  "pets": "have",
+  "religion": "christian",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time",
+   "acts"
+  ],
+  "prompts": [
+   {
+    "id": "learning",
+    "answer": "Thai curries from scratch. The paste is the whole secret."
+   },
+   {
+    "id": "green",
+    "answer": "You're kind to waiters and patient with your parents."
+   }
+  ]
+ },
+ "noor": {
+  "pronouns": "she",
+  "height_cm": 170,
+  "job": "a software engineer",
+  "languages": [
+   "English",
+   "Arabic",
+   "Urdu"
+  ],
+  "family_plans": "not_sure",
+  "timeline": "when_right",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "halal",
+  "sleep": "night_owl",
+  "religion": "muslim",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "acts"
+  ]
+ },
+ "aditi": {
+  "pronouns": "she",
+  "height_cm": 158,
+  "job": "a dancer",
+  "languages": [
+   "English",
+   "Hindi"
+  ],
+  "family_plans": "want",
+  "timeline": "within_year",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "jain",
+  "religion": "jain",
+  "religion_importance": "very",
+  "love_languages": [
+   "words"
+  ],
+  "dealbreakers": [
+   "diet"
+  ]
+ },
+ "kabir": {
+  "pronouns": "he",
+  "height_cm": 176,
+  "job": "a music producer",
+  "languages": [
+   "English",
+   "Hindi"
+  ],
+  "family_plans": "open",
+  "timeline": "one_two_years",
+  "drinking": "socially",
+  "smoking": "sometimes",
+  "diet": "non_veg",
+  "religion": "hindu",
+  "religion_importance": "not",
+  "love_languages": [
+   "time"
+  ]
+ },
+ "meera": {
+  "pronouns": "she",
+  "height_cm": 164,
+  "job": "a yoga teacher",
+  "languages": [
+   "English",
+   "Hindi"
+  ],
+  "family_plans": "want",
+  "timeline": "one_two_years",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "vegetarian",
+  "sleep": "early_bird",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time",
+   "words"
+  ],
+  "prompts": [
+   {
+    "id": "sunday",
+    "answer": "Sunrise yoga, the flower market, then a long lunch with my sisters."
+   }
+  ]
+ },
+ "ishaan": {
+  "pronouns": "he",
+  "height_cm": 177,
+  "job": "a product manager",
+  "languages": [
+   "English",
+   "Hindi"
+  ],
+  "family_plans": "want",
+  "timeline": "one_two_years",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "eggetarian",
+  "sleep": "flexible",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "acts",
+   "time"
+  ],
+  "prompts": [
+   {
+    "id": "learning",
+    "answer": "My nani's rajma. Three attempts so far, getting closer."
+   }
+  ]
+ },
+ "zara": {
+  "pronouns": "she",
+  "height_cm": 167,
+  "job": "a marine biologist",
+  "languages": [
+   "English",
+   "Arabic",
+   "Urdu"
+  ],
+  "family_plans": "open",
+  "timeline": "when_right",
+  "drinking": "no",
+  "smoking": "no",
+  "diet": "halal",
+  "exercise": "often",
+  "sleep": "early_bird",
+  "religion": "muslim",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "time"
+  ],
+  "prompts": [
+   {
+    "id": "hours",
+    "answer": "Octopuses. They're smarter than you think."
+   }
+  ]
+ },
+ "rahul": {
+  "pronouns": "he",
+  "height_cm": 181,
+  "job": "a hotel manager",
+  "languages": [
+   "English",
+   "Hindi",
+   "Gujarati"
+  ],
+  "family_plans": "want",
+  "timeline": "within_year",
+  "drinking": "socially",
+  "smoking": "no",
+  "diet": "vegetarian",
+  "sleep": "early_bird",
+  "religion": "hindu",
+  "religion_importance": "somewhat",
+  "love_languages": [
+   "acts",
+   "words"
+  ],
+  "prompts": [
+   {
+    "id": "win",
+    "answer": "Let me cook for you, and tell me honestly if it's too spicy."
+   }
+  ]
+ }
+};

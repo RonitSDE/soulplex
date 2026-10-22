@@ -48,9 +48,20 @@ def _load_dotenv():
                 os.environ.setdefault(key, value)
 
 
+def _postgres_url(url):
+    """Use the installed psycopg v3 driver. Render supplies postgresql://."""
+    if url.startswith("postgresql+"):
+        return url
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url
+
+
 _load_dotenv()
 
-url = os.getenv("DATABASE_URL", "sqlite:///./soulplex.db")
+url = _postgres_url(os.getenv("DATABASE_URL", "sqlite:///./soulplex.db"))
+os.environ["DATABASE_URL"] = url
 engine = create_engine(
     url,
     connect_args={"check_same_thread": False, "timeout": 30}

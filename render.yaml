@@ -1,0 +1,132 @@
+# Soulplex on Render.
+#
+# Blueprint: Dashboard → New → Blueprint, and point it at this repo.
+# The image in the Dockerfile builds the frontend and serves it from the API,
+# same as compose.production.yaml. Caddy is not used; Render terminates TLS.
+#
+# On first create, Render asks for every `sync: false` value. Fill in:
+#   AI_API_KEY, AI_MODEL, SMTP_HOST, SMTP_FROM, SMTP_USERNAME, SMTP_PASSWORD
+# AI_MODEL can be omitted only when MINDS_BUILDER_API_KEY is set. The API
+# still requires AI_API_KEY for safety screening, and production requires SMTP.
+#
+# APP_ORIGIN defaults to this service's https://….onrender.com URL.
+# After attaching a custom domain, set APP_ORIGIN to that exact origin
+# (https, no path) on both services and redeploy. Cookies and CSRF use it.
+#
+# API and worker must stay in the same region as the database. The connection
+# string is the private-network URL. Render emits postgresql://, and this
+# project uses psycopg v3, so the start command rewrites the scheme to
+# postgresql+psycopg:// before the process starts.
+#
+# Free web instances sleep, and a sleeping worker leaves dates queued.
+# These plans are the smallest paid sizes. The free Postgres plan expires.
+
+databases:
+  - name: soulplex-db
+    databaseName: soulplex
+    user: soulplex
+    plan: 0.1c-256mb
+    region: oregon
+    diskSizeGB: 5
+    ipAllowList: [] # private network only; API and worker connect internally
+
+envVarGroups:
+  - name: soulplex
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "false"
+      - key: PORT
+        value: "8000"
+      - key: AI_BASE_URL
+        value: https://api.openai.com/v1
+      - key: MINDS_MIND_TYPE
+        value: mastermind
+      - key: MATCH_SCORE_MIN
+        value: "70"
+      - key: SMTP_PORT
+        value: "587"
+
+services:
+  - type: web
+    name: soulplex
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    dockerCommand: |-
+      sh -c 'case "$DATABASE_URL" in postgresql://*) DATABASE_URL="postgresql+psycopg://${DATABASE_URL#postgresql://}";; postgres://*) DATABASE_URL="postgresql+psycopg://${DATABASE_URL#postgres://}";; esac; export DATABASE_URL; if [ -z "$APP_ORIGIN" ]; then export APP_ORIGIN="$RENDER_EXTERNAL_URL"; fi; exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --no-access-log'
+    envVars:
+      - fromGroup: soulplex
+      - key: DATABASE_URL
+        fromDatabase:
+          name: soulplex-db
+          property: connectionString
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: MINDS_BUILDER_API_KEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+
+  - type: worker
+    name: soulplex-worker
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: |-
+      sh -c 'case "$DATABASE_URL" in postgresql://*) DATABASE_URL="postgresql+psycopg://${DATABASE_URL#postgresql://}";; postgres://*) DATABASE_URL="postgresql+psycopg://${DATABASE_URL#postgres://}";; esac; export DATABASE_URL; exec python -m app.worker'
+    envVars:
+      - fromGroup: soulplex
+      - key: DATABASE_URL
+        fromDatabase:
+          name: soulplex-db
+          property: connectionString
+      - key: AI_API_KEY
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: AI_API_KEY
+      - key: AI_MODEL
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: AI_MODEL
+      - key: MINDS_BUILDER_API_KEY
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: MINDS_BUILDER_API_KEY
+      - key: SMTP_HOST
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: SMTP_HOST
+      - key: SMTP_FROM
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: SMTP_FROM
+      - key: SMTP_USERNAME
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: SMTP_USERNAME
+      - key: SMTP_PASSWORD
+        fromService:
+          name: soulplex
+          type: web
+          envVarKey: SMTP_PASSWORD

@@ -130,7 +130,6 @@ class Register(Profile):
     email: str = Field(max_length=254)
     password: str = Field(min_length=12, max_length=128)
     consent: bool
-    invite_code: str = Field(default="", max_length=128)
 
 
 class Login(Strict):
@@ -276,13 +275,9 @@ async def register(
     email = body.email.lower()
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
         raise HTTPException(422, "Enter a valid email.")
-    if not DEMO:
-        if not mail_ready():
-            raise HTTPException(503, "Email delivery is unavailable. Try again later.")
-        invite = db.get(Invite, digest(body.invite_code)) if body.invite_code else None
-        if not invite or invite.expires < time.time() or invite.used_by:
-            raise HTTPException(403, "A valid pilot invitation is required.")
-    data = body.model_dump(exclude={"email", "password", "consent", "invite_code"})
+    if not DEMO and not mail_ready():
+        raise HTTPException(503, "Email delivery is unavailable. Try again later.")
+    data = body.model_dump(exclude={"email", "password", "consent"})
     data["discovery"] = False
     u = User(
         **data,
@@ -303,17 +298,6 @@ async def register(
             db.rollback()
             raise HTTPException(503, str(exc))
     if not DEMO:
-        claimed = db.execute(
-            update(Invite)
-            .where(
-                Invite.token == invite.token,
-                Invite.used_by.is_(None),
-                Invite.expires >= time.time(),
-            )
-            .values(used_by=u.id)
-        )
-        if not claimed.rowcount:
-            raise HTTPException(403, "A valid pilot invitation is required.")
         raw = issue_token(db, u, "verify")
     csrf = new_session(db, u, response)
     log(db, u, "service_consent_v1")

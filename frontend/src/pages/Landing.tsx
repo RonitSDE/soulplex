@@ -33,7 +33,7 @@ export function Landing() {
   const { mode, busy, perform, applySession, notify, go, openSetup, setGuest, wantAuth, askAuth } = useStore();
   const [sheet, setSheet] = useState<"" | "login" | "register" | "reset">("");
   const [resetToken, setResetToken] = useState("");
-  const [f, setF] = useState({ ...blank, email: "", password: "", consent: false, invite_code: "" });
+  const [f, setF] = useState({ ...blank, email: "", password: "", consent: false });
 
   useEffect(() => {
     withWorld((w) => {
@@ -372,12 +372,6 @@ export function Landing() {
                   onChange={(e) => setF({ ...f, password: e.target.value })}
                 />
                 {sheet === "register" && <small>At least 12 characters.</small>}
-              </label>
-            )}
-            {sheet === "register" && mode !== "demo" && (
-              <label>
-                Pilot invitation code
-                <input required value={f.invite_code} onChange={(e) => setF({ ...f, invite_code: e.target.value })} />
               </label>
             )}
             {sheet === "register" && (

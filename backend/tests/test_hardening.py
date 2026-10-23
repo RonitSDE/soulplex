@@ -1,15 +1,14 @@
 import asyncio
 import hashlib
 import sqlite3
-import time
 
 import pytest
 from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.exc import IntegrityError
 
 from app import main, domain, db as database
-from app.db import SessionLocal, User, Invite, Scene, Participation, Quota
-from app.security import digest, check_password, hash_password
+from app.db import SessionLocal, User, Scene, Participation, Quota
+from app.security import check_password, hash_password
 from app.worker import process_one
 from test_flows import REG
 
@@ -27,19 +26,9 @@ def live_for_test(monkeypatch):
     return sent
 
 
-def test_invite_email_gate_and_single_use(client, monkeypatch):
+def test_email_verification_gate(client, monkeypatch):
     sent = live_for_test(monkeypatch)
-    with SessionLocal() as db:
-        db.add(Invite(token=digest("pilot-secret"), expires=time.time() + 3600))
-        db.commit()
-    assert client.post("/api/auth/register", json=REG).status_code == 403
-    assert (
-        client.post(
-            "/api/auth/register", json={**REG, "invite_code": "bad"}
-        ).status_code
-        == 403
-    )
-    r = client.post("/api/auth/register", json={**REG, "invite_code": "pilot-secret"})
+    r = client.post("/api/auth/register", json=REG)
     assert r.status_code == 200, r.text
     assert not r.json()["user"]["email_verified"]
     client.headers["X-CSRF-Token"] = r.json()["csrf"]
@@ -54,17 +43,6 @@ def test_invite_email_gate_and_single_use(client, monkeypatch):
         == 403
     )
     assert client.get("/api/candidates").json()["candidates"] == []
-    assert (
-        client.post(
-            "/api/auth/register",
-            json={
-                **REG,
-                "email": "other@example.invalid",
-                "invite_code": "pilot-secret",
-            },
-        ).status_code
-        == 403
-    )
     first_token = sent[-1][1]
     assert client.post("/api/auth/resend-verification").status_code == 200
     assert (
@@ -83,10 +61,7 @@ def test_invite_email_gate_and_single_use(client, monkeypatch):
 
 def test_password_reset_revokes_sessions_and_replay(client, monkeypatch):
     sent = live_for_test(monkeypatch)
-    with SessionLocal() as db:
-        db.add(Invite(token=digest("secret"), expires=time.time() + 3600))
-        db.commit()
-    r = client.post("/api/auth/register", json={**REG, "invite_code": "secret"})
+    r = client.post("/api/auth/register", json=REG)
     assert r.status_code == 200
     unknown = client.post(
         "/api/auth/request-reset", json={"email": "nobody@example.invalid"}
@@ -126,14 +101,11 @@ def test_password_reset_revokes_sessions_and_replay(client, monkeypatch):
 def test_operator_cannot_approve_unverified_email_but_can_suspend(client, monkeypatch):
     live_for_test(monkeypatch)
     with SessionLocal() as db:
-        db.add(Invite(token=digest("once"), expires=time.time() + 3600))
         operator = db.scalar(select(User).where(User.name == "Pilot operator"))
         operator.password = hash_password("known-operator-password")
         operator.email_verified = True
         db.commit()
-    member = client.post(
-        "/api/auth/register", json={**REG, "invite_code": "once"}
-    ).json()["user"]
+    member = client.post("/api/auth/register", json=REG).json()["user"]
     r = client.post(
         "/api/auth/login",
         json={

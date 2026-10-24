@@ -3,13 +3,14 @@ import { ArrowLeft, ArrowRight, Check, X, Sparkles, Send, ShieldCheck } from "lu
 import { api, type User } from "../api";
 import { useStore } from "../store";
 import { Wisp } from "../ui";
-import { FIELDS, PROMPTS, DEALBREAKERS, heightLabel, type About } from "../about";
+import { FIELDS, PROMPTS, DEALBREAKERS, SCENES, heightLabel, type About } from "../about";
 import { aboutFacts } from "../aboutLogic";
 import { FaceStudio } from "./FaceStudio";
 
 const STEPS = [
   { id: "you", title: "About you", hint: "The basics people look for first." },
   { id: "looking", title: "What you want", hint: "Your agent only meets people who want the same thing." },
+  { id: "scene", title: "First scene", hint: "Where would you feel most yourself? We can always explore somewhere else later." },
   { id: "life", title: "Everyday life", hint: "Small habits make big differences." },
   { id: "heart", title: "Faith & love", hint: "Optional, but powerful for finding the right match." },
   { id: "prompts", title: "Your voice", hint: "Answer up to three prompts. Your agent quotes them on dates." },
@@ -192,7 +193,7 @@ export function SetupWizard({ start = 0, onClose }: { start?: number; onClose: (
                     {[
                       ["woman", "Women"],
                       ["man", "Men"],
-                      ["nonbinary", "Nonbinary people"],
+                      ["nonbinary", "Non-binary people"],
                     ].map(([v, l]) => {
                       const on = p.seeking.includes(v);
                       return (
@@ -228,6 +229,28 @@ export function SetupWizard({ start = 0, onClose }: { start?: number; onClose: (
                 <Choice field="children" value={a.children} onChange={(v) => set("children", v)} />
                 <Choice field="relocate" value={a.relocate} onChange={(v) => set("relocate", v)} />
               </>
+            )}
+
+            {S.id === "scene" && (
+              <div className="w-field">
+                <span className="w-label">
+                  <i>🗺️</i> Choose your first scene
+                </span>
+                <div className="w-chips big">
+                  {SCENES.map(([id, label, icon]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={a.date_comfort === id ? "on" : ""}
+                      aria-pressed={a.date_comfort === id}
+                      onClick={() => set("date_comfort", a.date_comfort === id ? undefined : id)}
+                    >
+                      <span>{icon}</span> {label}
+                    </button>
+                  ))}
+                </div>
+                <p className="fine">You can skip this. Leaving it blank is not the same as choosing Surprise me.</p>
+              </div>
             )}
 
             {S.id === "life" && (

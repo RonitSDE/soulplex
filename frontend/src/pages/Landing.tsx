@@ -306,8 +306,8 @@ export function Landing() {
                     <select value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value })}>
                       <option value="woman">Woman</option>
                       <option value="man">Man</option>
-                      <option value="nonbinary">Nonbinary</option>
-                      <option value="self-described">Self-described</option>
+                      <option value="nonbinary">Non-binary</option>
+                      <option value="self-described">I describe my gender another way</option>
                     </select>
                   </label>
                   <label>
@@ -315,8 +315,8 @@ export function Landing() {
                     <select value={f.seeking[0]} onChange={(e) => setF({ ...f, seeking: [e.target.value] })}>
                       <option value="man">Men</option>
                       <option value="woman">Women</option>
-                      <option value="nonbinary">Nonbinary people</option>
-                      <option value="self-described">Self-described people</option>
+                      <option value="nonbinary">Non-binary people</option>
+                      <option value="self-described">People who self-describe their gender</option>
                     </select>
                   </label>
                 </div>

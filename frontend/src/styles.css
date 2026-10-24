@@ -462,6 +462,8 @@ label small {
   height: 38px;
   flex: none;
   border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
   filter: drop-shadow(0 6px 14px rgba(255, 78, 160, 0.35));
 }
 .brand.small .brand-mark {

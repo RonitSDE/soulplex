@@ -7,8 +7,8 @@ import { Panel, Head } from "./Shell";
 const GENDERS = [
   ["woman", "Women"],
   ["man", "Men"],
-  ["nonbinary", "Nonbinary people"],
-  ["self-described", "Self-described people"],
+  ["nonbinary", "Non-binary people"],
+  ["self-described", "People who self-describe their gender"],
 ];
 
 export function Settings() {
@@ -68,8 +68,8 @@ export function Settings() {
             <select value={p.gender} onChange={(e) => set("gender", e.target.value)}>
               <option value="woman">Woman</option>
               <option value="man">Man</option>
-              <option value="nonbinary">Nonbinary</option>
-              <option value="self-described">Self-described</option>
+              <option value="nonbinary">Non-binary</option>
+              <option value="self-described">I describe my gender another way</option>
             </select>
           </label>
         </div>

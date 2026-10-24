@@ -27,6 +27,14 @@ export function aboutFacts(a: About): [string, string, string][] {
   m("smoking", "lifestyle", { no: "I don't smoke.", sometimes: "I smoke sometimes.", yes: "I smoke." });
   m("exercise", "lifestyle", { often: "I work out often; staying active matters to me.", sometimes: "I stay active now and then.", rarely: "I'm more of a relaxed, low-key person than a gym regular." });
   m("sleep", "lifestyle", { early_bird: "I'm an early bird.", night_owl: "I'm a night owl.", flexible: "My sleep schedule is flexible." });
+  m("date_comfort", "lifestyle", {
+    quiet_cafe: "I'd feel most like myself at a quiet café.",
+    park: "I'd feel most like myself on a walk in the park.",
+    bookshop: "I'd feel most like myself in a bookshop or gallery.",
+    activity: "I'd feel most like myself doing a fun activity.",
+    dinner: "I'd feel most like myself at a comfortable dinner.",
+    flexible: "I'm flexible about where a first date happens.",
+  });
   m("pets", "lifestyle", { have: "I have a pet at home.", love: "I love animals.", allergic: "I'm allergic to pets.", no: "Pets aren't really my thing." });
   m("family_plans", "future", { want: "I'd love to have children someday.", dont_want: "A family of two feels right to me.", open: "I'm open to having children.", not_sure: "I'm still deciding about starting a family." });
   m("timeline", "future", { within_year: "I'd like to settle down within a year.", one_two_years: "I'd like to settle down in the next one or two years.", when_right: "I'll settle down when it feels right, with no rush." });

@@ -24,6 +24,7 @@ CHOICES = {
     "pets": ["have", "love", "allergic", "no"],
     "religion": ["hindu", "muslim", "christian", "sikh", "jain", "buddhist", "jewish", "spiritual", "not_religious", "other", "prefer_not"],
     "religion_importance": ["very", "somewhat", "not"],
+    "date_comfort": ["quiet_cafe", "park", "bookshop", "activity", "dinner", "flexible"],
 }
 MULTI = {
     "languages": ["English", "Hindi", "Arabic", "Urdu", "Punjabi", "Tamil", "Telugu", "Malayalam", "Bengali", "Marathi", "Gujarati", "Kannada", "French", "Tagalog", "Other"],
@@ -109,6 +110,16 @@ def facts(a: dict) -> list[tuple[str, str, str]]:
         add("smoking", "lifestyle", {"no": "I don't smoke.", "sometimes": "I smoke sometimes.", "yes": "I smoke."}[a["smoking"]])
     if "exercise" in a:
         add("exercise", "lifestyle", {"often": "I work out often; staying active matters to me.", "sometimes": "I stay active now and then.", "rarely": "I'm more of a relaxed, low-key person than a gym regular."}[a["exercise"]])
+    if "date_comfort" in a:
+        scene = {
+            "quiet_cafe": "I'd feel most like myself at a quiet café.",
+            "park": "I'd feel most like myself on a walk in the park.",
+            "bookshop": "I'd feel most like myself in a bookshop or gallery.",
+            "activity": "I'd feel most like myself doing a fun activity.",
+            "dinner": "I'd feel most like myself at a comfortable dinner.",
+            "flexible": "I'm flexible about where a first date happens.",
+        }[a["date_comfort"]]
+        add("date_comfort", "lifestyle", scene)
     if "sleep" in a:
         add("sleep", "lifestyle", {"early_bird": "I'm an early bird.", "night_owl": "I'm a night owl.", "flexible": "My sleep schedule is flexible."}[a["sleep"]])
     if "pets" in a:

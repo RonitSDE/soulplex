@@ -1,65 +1,14 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { DIM_LABEL, type FaceView } from "./api";
 import { faceUrl } from "./faces";
 import { useStore } from "./store";
 
-/** The Soulplex mark: two people, pink and cyan, looped into one shape. */
-export function LogoMark({ className }: { className?: string }) {
-  const id = useId().replace(/:/g, "");
-  const pink = id + "p";
-  const cyan = id + "c";
-  const headP = id + "hp";
-  const headC = id + "hc";
-  return (
-    <svg className={className} viewBox="0 0 200 200" aria-hidden="true">
-      <circle cx="100" cy="100" r="100" fill="#fff" />
-      <defs>
-        <linearGradient id={pink} x1="16" y1="24" x2="130" y2="186" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#ffd0e4" />
-          <stop offset="0.28" stopColor="#ff6aad" />
-          <stop offset="0.62" stopColor="#f23390" />
-          <stop offset="1" stopColor="#7a28e0" />
-        </linearGradient>
-        <linearGradient id={cyan} x1="188" y1="12" x2="70" y2="190" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#baf8ff" />
-          <stop offset="0.38" stopColor="#2ec8ea" />
-          <stop offset="1" stopColor="#1a4bff" />
-        </linearGradient>
-        <radialGradient id={headP} cx="35%" cy="32%" r="70%">
-          <stop offset="0" stopColor="#ffd4ea" />
-          <stop offset="0.5" stopColor="#ff5ea4" />
-          <stop offset="1" stopColor="#e01884" />
-        </radialGradient>
-        <radialGradient id={headC} cx="35%" cy="32%" r="70%">
-          <stop offset="0" stopColor="#e7fdff" />
-          <stop offset="0.48" stopColor="#3ad4f2" />
-          <stop offset="1" stopColor="#1288d4" />
-        </radialGradient>
-      </defs>
-      <path
-        d="M76 64 C 34 80, 14 122, 32 156 C 50 190, 96 194, 118 168 C 132 152, 122 146, 136 132"
-        fill="none"
-        stroke={`url(#${pink})`}
-        strokeWidth="34"
-        strokeLinecap="round"
-      />
-      <path
-        d="M130 58 C 174 72, 198 116, 180 154 C 164 188, 122 196, 104 170 C 92 154, 106 146, 92 134"
-        fill="none"
-        stroke={`url(#${cyan})`}
-        strokeWidth="32"
-        strokeLinecap="round"
-      />
-      <circle cx="72" cy="46" r="18" fill={`url(#${headP})`} />
-      <circle cx="136" cy="42" r="16" fill={`url(#${headC})`} />
-    </svg>
-  );
-}
+const LOGO = "/EelmAPbh_400x400.jpg";
 
 export function Brand({ small = false }: { small?: boolean }) {
   return (
     <div className={"brand" + (small ? " small" : "")}>
-      <LogoMark className="brand-mark" />
+      <img className="brand-mark" src={LOGO} alt="" />
       <span>soulplex</span>
     </div>
   );

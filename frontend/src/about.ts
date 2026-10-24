@@ -5,6 +5,7 @@ export type About = {
   languages?: string[]; marital?: string; children?: string; family_plans?: string; timeline?: string;
   relocate?: string; drinking?: string; smoking?: string; diet?: string; exercise?: string; sleep?: string;
   pets?: string; religion?: string; religion_importance?: string; love_languages?: string[];
+  date_comfort?: string;
   prompts?: { id: string; answer: string }[]; dealbreakers?: string[];
 };
 
@@ -28,6 +29,16 @@ export const FIELDS: Record<string, { label: string; icon: string; options: Opt[
   religion_importance: { label: "How important is faith to you?", icon: "✨", options: [["very", "Very"], ["somewhat", "Somewhat"], ["not", "Not very"]] },
   love_languages: { label: "I feel loved through (pick up to 2)", icon: "💞", multi: 2, options: [["words", "Kind words"], ["time", "Quality time"], ["gifts", "Thoughtful gifts"], ["acts", "Acts of help"], ["touch", "Physical closeness"]] },
 };
+
+/** Q05 first-scene choices. A skip stays unanswered; "flexible" is an explicit choice. */
+export const SCENES: [id: string, label: string, icon: string][] = [
+  ["quiet_cafe", "A quiet café", "☕"],
+  ["park", "A walk in the park", "🌳"],
+  ["bookshop", "A bookshop or gallery", "📖"],
+  ["activity", "A fun activity", "🎯"],
+  ["dinner", "Dinner somewhere comfortable", "🍽️"],
+  ["flexible", "Surprise me - I am flexible", "✨"],
+];
 
 export const PROMPTS: Record<string, string> = {
   sunday: "My perfect Sunday looks like…",

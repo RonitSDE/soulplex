@@ -1606,12 +1606,12 @@ if static.exists():
     def home():
         return FileResponse(static / "index.html")
 
-    @app.get("/favicon.svg")
-    def favicon():
-        icon = static / "favicon.svg"
+    @app.get("/EelmAPbh_400x400.jpg")
+    def logo():
+        icon = static / "EelmAPbh_400x400.jpg"
         if not icon.exists():
             raise HTTPException(404)
-        return FileResponse(icon, media_type="image/svg+xml")
+        return FileResponse(icon, media_type="image/jpeg")
 
 
 @app.post("/api/transcribe")

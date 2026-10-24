@@ -791,7 +791,7 @@ function DateDetail({ s }: { s: Experience }) {
         type: s.venue,
         spot: s.spot ?? 0,
         mode: VENUES[s.venue]?.mode,
-        a: { id: user!.id, name: user!.name, hue: user!.hue, self: true, face: headUrl(user!.face, user!.id, user!.hue), ...bodyColors(user!.face, user!.id, user!.hue) },
+        a: { id: user!.id, name: user!.name, hue: user!.hue, self: true, face: headUrl(user!.face, user!.id, user!.hue, user!.gender), ...bodyColors(user!.face, user!.id, user!.hue, user!.gender) },
         b: { id: s.partner.id, name: s.partner.name, hue: s.partner.hue, face: headUrl(s.partner.face, s.partner.id, s.partner.hue), ...bodyColors(s.partner.face, s.partner.id, s.partner.hue) },
         phase: "walking",
       });

@@ -457,28 +457,16 @@ label small {
   gap: 8px;
 }
 .brand-mark {
-  position: relative;
-  width: 26px;
-  height: 22px;
+  display: block;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  filter: drop-shadow(0 6px 14px rgba(255, 78, 160, 0.35));
 }
 .brand.small .brand-mark {
-  width: 22px;
-  height: 18px;
-}
-.brand-mark i {
-  position: absolute;
-  top: 0;
-  width: 64%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fff, #ffb38a 35%, #ff7eb6 75%);
-  box-shadow: 0 0 14px rgba(255, 126, 182, 0.8);
-}
-.brand-mark i + i {
-  right: 0;
-  background: radial-gradient(circle at 35% 35%, #fff, #c1b0ff 35%, #7b5cff 80%);
-  box-shadow: 0 0 14px rgba(169, 139, 255, 0.8);
-  mix-blend-mode: screen;
+  width: 30px;
+  height: 30px;
 }
 
 /* wisp avatar */

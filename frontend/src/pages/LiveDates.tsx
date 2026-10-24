@@ -29,6 +29,11 @@ export function LiveTalk({ l }: { l: LiveDate }) {
   const [err, setErr] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (l.lines?.length) {
+      setD({ id: l.id, type: l.type, status: l.status, a: l.a, b: l.b, lines: l.lines });
+      setErr(false);
+      return;
+    }
     let alive = true;
     const load = () =>
       api<PublicDate>("/public/dates/" + l.id)
@@ -172,7 +177,10 @@ export function LiveDates({
   max?: number;
 }) {
   const { go } = useStore();
-  const list = useMemo(() => (d?.live ?? []).filter((l) => !island || l.type === island), [d, island]);
+  const list = useMemo(() => {
+    const rows = (d?.live ?? []).filter((l) => !island || l.type === island);
+    return [...rows.filter((l) => !l.ambient), ...rows.filter((l) => l.ambient)];
+  }, [d, island]);
   if (!d) return null;
   const sel = list.find((l) => l.id === selected);
   return (

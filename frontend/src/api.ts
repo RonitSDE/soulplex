@@ -111,6 +111,9 @@ export type LiveDate = {
   step: number;
   mine: boolean;
   public?: boolean; // both members let visitors watch, including the conversation
+  /** Display-only island activity. It sits under real dates and is not an account. */
+  ambient?: boolean;
+  lines?: { side: "a" | "b"; speaker: string; text: string; stage: number; mood: string }[];
   a: LiveAgent;
   b: LiveAgent;
 };

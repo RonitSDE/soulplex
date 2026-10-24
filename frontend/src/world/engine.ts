@@ -134,6 +134,8 @@ class Wisp {
   seated = false;
   pose: "sit" | "stand" = "sit";
   follow = false; // walking-date mode: pinned is a moving target
+  greet = 0;
+  wasSeated = false;
   color: THREE.Color;
   speed = rand(0.75, 1.0);
   size = 1;
@@ -146,11 +148,11 @@ class Wisp {
       this.mats.push(m);
       return m;
     };
-    const skin = mat(info.skin ?? "#d6a07a");
-    const hair = mat(info.hair ?? "#2b1d18", { roughness: 0.9 });
-    const outfit = mat(info.outfit ?? this.color, { emissive: info.outfit ?? this.color, emissiveIntensity: 0.12 });
-    const pants = mat("#2f2a48");
-    const shoes = mat("#1a1524");
+    const skin = mat(info.skin ?? "#d6a07a", { roughness: 0.55, metalness: 0.02 });
+    const hair = mat(info.hair ?? "#2b1d18", { roughness: 0.72, metalness: 0.04 });
+    const outfit = mat(info.outfit ?? this.color, { roughness: 0.46, metalness: 0.08, emissive: info.outfit ?? this.color, emissiveIntensity: 0.2 });
+    const pants = mat("#2a2644", { roughness: 0.62 });
+    const shoes = mat("#16131f", { roughness: 0.4, metalness: 0.12 });
     const part = (geo: THREE.BufferGeometry, m: THREE.Material, y: number, parent: THREE.Object3D, x = 0, z = 0) => {
       const mesh = new THREE.Mesh(geo, m);
       mesh.position.set(x, y, z);
@@ -179,6 +181,7 @@ class Wisp {
     for (const side of [-1, 1]) {
       const shoulder = new THREE.Group();
       shoulder.position.set(side * 0.215, 0.93, 0);
+      part(sharedGeo("shoulder", () => new THREE.SphereGeometry(0.072, MOBILE ? 6 : 12, MOBILE ? 5 : 10)), outfit, 0.01, shoulder);
       part(capsule(0.052, 0.13, "arm"), outfit, -0.1, shoulder);
       const elbow = new THREE.Group();
       elbow.position.y = -0.2;
@@ -216,9 +219,9 @@ class Wisp {
     this.marker = new THREE.Mesh(
       sharedGeo(info.self ? "ring-self" : "ring", () => new THREE.RingGeometry(0.3, info.self ? 0.37 : 0.34, MOBILE ? 16 : 40)),
       new THREE.MeshBasicMaterial({
-        color: info.self ? 0xffffff : this.color,
+        color: info.self ? 0xff4d9a : this.color,
         transparent: true,
-        opacity: info.self ? 0.9 : 0.55,
+        opacity: info.self ? 0.95 : 0.55,
         side: THREE.DoubleSide,
         depthWrite: false,
       }),
@@ -226,6 +229,16 @@ class Wisp {
     this.marker.rotation.x = -Math.PI / 2;
     this.marker.position.y = 0.025;
     this.group.add(this.marker);
+    if (info.self) {
+      const halo = new THREE.Mesh(
+        sharedGeo("ring-cyan", () => new THREE.RingGeometry(0.4, 0.46, MOBILE ? 16 : 40)),
+        new THREE.MeshBasicMaterial({ color: 0x2ec8ea, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }),
+      );
+      this.mats.push(halo.material);
+      halo.rotation.x = -Math.PI / 2;
+      halo.position.y = 0.02;
+      this.group.add(halo);
+    }
     this.label = labelSprite(info.self ? info.name + " · you" : info.name, "#" + this.color.getHexString());
     if (!info.self) (this.label.material as THREE.SpriteMaterial).opacity = 0.82;
     this.label.position.y = 1.68;
@@ -350,31 +363,45 @@ class Wisp {
     // gait
     this.phase += dt * motion * (4 + sp * 6);
     const w = this.walk, ph = this.phase;
+    if (this.seated && !this.wasSeated) this.greet = 1.15;
+    this.wasSeated = this.seated;
+    if (this.greet > 0) this.greet = Math.max(0, this.greet - dt);
     if (this.seated) {
       this.legs.forEach(({ hip, knee }) => {
         hip.rotation.x = THREE.MathUtils.lerp(hip.rotation.x, -1.45, dt * 6);
         knee.rotation.x = THREE.MathUtils.lerp(knee.rotation.x, 1.45, dt * 6);
       });
       this.arms.forEach(({ shoulder, elbow }, i) => {
+        if (this.greet > 0 && i === 1) {
+          const wave = Math.sin((1.15 - this.greet) * 14);
+          shoulder.rotation.x = THREE.MathUtils.lerp(shoulder.rotation.x, -2.15 + wave * 0.28, dt * 8);
+          shoulder.rotation.z = THREE.MathUtils.lerp(shoulder.rotation.z, -0.35, dt * 8);
+          elbow.rotation.x = THREE.MathUtils.lerp(elbow.rotation.x, -0.45, dt * 8);
+          return;
+        }
         shoulder.rotation.x = THREE.MathUtils.lerp(shoulder.rotation.x, -0.55 + Math.sin(t * 1.3 + i) * 0.05, dt * 5);
+        shoulder.rotation.z = THREE.MathUtils.lerp(shoulder.rotation.z, (i === 0 ? -1 : 1) * 0.08, dt * 5);
         elbow.rotation.x = THREE.MathUtils.lerp(elbow.rotation.x, -0.7, dt * 5);
       });
       pos.y = THREE.MathUtils.lerp(pos.y, 0.46 - 0.5 * this.size, dt * 6);
       this.root.position.y = 0;
+      this.root.rotation.x = THREE.MathUtils.lerp(this.root.rotation.x, 0.12, dt * 5);
     } else {
       this.legs.forEach(({ hip, knee }, i) => {
         const s = Math.sin(ph + i * Math.PI);
-        hip.rotation.x = -s * 0.55 * w;
-        knee.rotation.x = Math.max(0, Math.sin(ph + i * Math.PI - 1.1)) * 0.95 * w;
+        hip.rotation.x = -s * 0.62 * w;
+        knee.rotation.x = Math.max(0, Math.sin(ph + i * Math.PI - 1.05)) * 1.05 * w;
       });
       this.arms.forEach(({ shoulder, elbow }, i) => {
-        shoulder.rotation.x = Math.sin(ph + i * Math.PI) * 0.5 * w + Math.sin(t * 1.2 + i) * 0.03;
-        elbow.rotation.x = -0.25 - 0.25 * w;
+        shoulder.rotation.x = Math.sin(ph + i * Math.PI) * 0.55 * w + Math.sin(t * 1.2 + i) * 0.03;
+        shoulder.rotation.z = (i === 0 ? -1 : 1) * 0.08;
+        elbow.rotation.x = -0.22 - 0.32 * w;
       });
       pos.y = THREE.MathUtils.lerp(pos.y, 0, dt * 6);
-      this.root.position.y = Math.abs(Math.sin(ph)) * 0.035 * w + Math.sin(t * 2 + this.phase) * 0.004;
+      this.root.position.y = Math.abs(Math.sin(ph)) * 0.045 * w + Math.sin(t * 2 + this.phase) * 0.004;
+      this.root.rotation.x = THREE.MathUtils.lerp(this.root.rotation.x, 0.07 * w, dt * 6);
     }
-    this.root.rotation.z = Math.sin(ph) * 0.03 * w;
+    this.root.rotation.z = Math.sin(ph) * 0.055 * w;
 
     // the head turns toward the viewer (within a natural range) so faces stay readable
     if (cam) {
@@ -2075,6 +2102,10 @@ export class SoulWorld {
       const on = !!c.a.group.userData.shown && near;
       c.a.group.visible = c.b.group.visible = on;
       if (on) {
+        if (c.mode === "walk") {
+          c.a.lookAt = c.b.group.position;
+          c.b.lookAt = c.a.group.position;
+        }
         c.a.update(dt, t, this.islandR, camK, cam);
         c.b.update(dt, t, this.islandR, camK, cam);
       }

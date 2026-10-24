@@ -10,6 +10,7 @@ The server decides per viewer which image to send, so an unrevealed photo
 never leaves the server for someone who is not a mutual match.
 """
 
+import hashlib
 import re
 
 OPTIONS = {
@@ -43,6 +44,51 @@ def clean_image(value):
     if not isinstance(value, str) or len(value) > MAX_IMAGE or not DATA_URL.match(value):
         raise ValueError("Upload a JPEG, PNG or WebP image under 90 KB after cropping.")
     return value
+
+
+def spec_for(gender: str, seed: str) -> dict:
+    """Illustrated face that matches the gender the person chose.
+
+    Indexes follow the client renderer: hair 1/2/6/8 and eyes 1 read as a woman,
+    so a man never gets long hair, a bun, a hijab, lashes, a bindi, earrings or a flower.
+    """
+    n = int(hashlib.sha256(seed.encode()).hexdigest(), 16)
+
+    def one(pool, shift):
+        return pool[(n >> shift) % len(pool)]
+
+    g = (gender or "").lower()
+    if g in ("man", "men"):
+        hair, eyes, facial, accessory = one([0, 4, 5, 7], 0), one([0, 2], 4), one([0, 1, 1, 2], 8), one([0, 0, 1], 12)
+    elif g in ("woman", "women"):
+        hair, eyes, facial, accessory = one([1, 2, 3, 6], 0), one([0, 1, 2], 4), 0, one([0, 1, 2, 3, 4], 12)
+    else:
+        hair, eyes, facial, accessory = one([0, 3, 4, 5], 0), one([0, 2], 4), 0, one([0, 0, 1], 12)
+    return {
+        "skin": (n >> 1) % 6,
+        "hair": hair,
+        "hairColor": (n >> 3) % 7,
+        "eyes": eyes,
+        "brows": (n >> 5) % 3,
+        "mouth": (n >> 7) % 3,
+        "facial": facial,
+        "accessory": accessory,
+        "outfit": (n >> 9) % 6,
+    }
+
+
+def apply_auto_face(user) -> bool:
+    """Give an account a gender-matched illustration until they choose their own."""
+    face = user.face or {}
+    if face.get("kind") == "photo":
+        return False
+    if face.get("kind") == "illustrated" and not face.get("auto"):
+        return False
+    spec = spec_for(user.gender, user.id)
+    if face.get("auto") and face.get("spec") == spec:
+        return False
+    user.face = {"kind": "illustrated", "auto": True, "spec": spec}
+    return True
 
 
 def view(face, *, owner=False, revealed=False):

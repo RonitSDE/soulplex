@@ -28,16 +28,33 @@ export const OPTIONS: { key: keyof FaceSpec; label: string; choices: string[] }[
   { key: "outfit", label: "Outfit", choices: OUTFIT },
 ];
 
-export function defaultSpec(seed: string): FaceSpec {
+/** Hair, eyes and accessories that read as the gender the person chose. */
+export function defaultSpec(seed: string, gender?: string): FaceSpec {
   let h = 7;
   for (const c of seed) h = (h * 33 + c.charCodeAt(0)) >>> 0;
-  const pick = (n: number) => {
+  const roll = () => {
     h = (h * 1103515245 + 12345) >>> 0;
-    return (h >>> 8) % n;
+    return h >>> 8;
   };
+  const one = (pool: number[]) => pool[roll() % pool.length];
+  const g = (gender || "").toLowerCase();
+  const man = g === "man" || g === "men";
+  const woman = g === "woman" || g === "women";
+  // 0 short, 4 side, 5 buzz, 7 turban. Long, bun, wavy, hijab, lashes, bindi, earrings and flowers stay off a man's face.
+  const hair = man ? one([0, 4, 5, 7]) : woman ? one([1, 2, 3, 6]) : one([0, 3, 4, 5]);
+  const eyes = man || !woman ? one([0, 2]) : one([0, 1, 2]);
+  const facial = man ? one([0, 1, 1, 2]) : 0;
+  const accessory = man || !woman ? one([0, 0, 1]) : one([0, 1, 2, 3, 4]);
   return {
-    skin: pick(6), hair: pick(7), hairColor: pick(5), eyes: pick(3), brows: pick(3),
-    mouth: pick(3), facial: 0, accessory: pick(2) ? 0 : pick(5), outfit: pick(6),
+    skin: roll() % 6,
+    hair,
+    hairColor: roll() % 7,
+    eyes,
+    brows: roll() % 3,
+    mouth: roll() % 3,
+    facial,
+    accessory,
+    outfit: roll() % 6,
   };
 }
 
@@ -126,21 +143,21 @@ export function avatarSVG(specIn: Partial<FaceSpec>, hue = 320, seed = "x", head
 export const svgUrl = (svg: string) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 
 /** One image URL for any face, with a deterministic illustrated fallback. */
-export function faceUrl(face: FaceView | undefined | null, seed: string, hue: number): string {
+export function faceUrl(face: FaceView | undefined | null, seed: string, hue: number, gender?: string): string {
   const f = (face ?? {}) as any;
   if (f.kind === "photo") {
     const img = f.image ?? f.photo;
     if (img) return img;
   }
-  if (f.kind === "illustrated") return svgUrl(avatarSVG(f.spec ?? {}, hue, seed));
-  return svgUrl(avatarSVG(defaultSpec(seed), hue, seed));
+  const spec = f.kind === "illustrated" ? { ...defaultSpec(seed, gender), ...f.spec } : defaultSpec(seed, gender);
+  return svgUrl(avatarSVG(spec, hue, seed));
 }
 
 /** The face for a 3D head: illustrated faces drop the badge background; photos stay as they are. */
-export function headUrl(face: FaceView | undefined | null, seed: string, hue: number): string {
+export function headUrl(face: FaceView | undefined | null, seed: string, hue: number, gender?: string): string {
   const f = (face ?? {}) as any;
   if (f.kind === "photo" && (f.image ?? f.photo)) return f.image ?? f.photo;
-  const spec = f.kind === "illustrated" ? f.spec ?? {} : defaultSpec(seed);
+  const spec = f.kind === "illustrated" ? { ...defaultSpec(seed, gender), ...f.spec } : defaultSpec(seed, gender);
   return svgUrl(avatarSVG(spec, hue, seed, true));
 }
 
@@ -240,10 +257,10 @@ export function softFocus(base: HTMLCanvasElement, hue: number) {
 export const toJpeg = (c: HTMLCanvasElement) => c.toDataURL("image/jpeg", 0.84);
 
 /** Colours for the 3D body, matching the face (head covering counts as "hair"). */
-export function bodyColors(face: FaceView | undefined | null, seed: string, hue: number) {
+export function bodyColors(face: FaceView | undefined | null, seed: string, hue: number, gender?: string) {
   const f = (face ?? {}) as any;
   if (f.kind === "photo") return { skin: "#c99272", hair: "#2b1d18", outfit: `hsl(${hue}, 70%, 58%)` };
-  const s = { ...defaultSpec(seed), facial: 0, ...(f.kind === "illustrated" ? f.spec : {}) } as FaceSpec;
+  const s = { ...defaultSpec(seed, gender), ...(f.kind === "illustrated" ? f.spec : {}) } as FaceSpec;
   const covered = s.hair === 7 || s.hair === 8;
   return {
     skin: SKIN[s.skin] ?? SKIN[2],

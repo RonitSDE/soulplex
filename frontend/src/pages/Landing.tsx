@@ -12,7 +12,7 @@ const L: Record<string, [number, Partial<FaceSpec>]> = {
   Leila: [45, { skin: 2, hair: 8, hairColor: 0, eyes: 1, brows: 0, mouth: 0, facial: 0, accessory: 0, outfit: 3 }],
   Karan: [140, { skin: 2, hair: 4, hairColor: 0, eyes: 2, brows: 1, mouth: 1, facial: 0, accessory: 1, outfit: 2 }],
   Sara: [270, { skin: 1, hair: 3, hairColor: 3, eyes: 1, brows: 0, mouth: 0, facial: 0, accessory: 3, outfit: 1 }],
-  Vikram: [15, { skin: 4, hair: 7, hairColor: 0, eyes: 1, brows: 1, mouth: 1, facial: 1, accessory: 0, outfit: 2 }],
+  Vikram: [15, { skin: 4, hair: 5, hairColor: 0, eyes: 0, brows: 1, mouth: 1, facial: 1, accessory: 0, outfit: 2 }],
 };
 const lface = (n: string) => ({ kind: "illustrated" as const, spec: L[n][1] });
 

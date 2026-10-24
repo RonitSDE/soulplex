@@ -28,15 +28,22 @@ from .auth_flow import mail_ready, issue_token, consume_token, send_auth_email
 async def lifespan(app):
     if PRODUCTION and not ORIGIN.startswith("https://"):
         raise RuntimeError("Production requires an HTTPS APP_ORIGIN.")
-    if not os.getenv("AI_API_KEY"):
+    if PRODUCTION and not os.getenv("AI_API_KEY"):
         raise RuntimeError("AI_API_KEY is required for safety screening.")
-    if not os.getenv("AI_MODEL") and not minds_enabled():
+    if PRODUCTION and not os.getenv("AI_MODEL") and not minds_enabled():
         raise RuntimeError(
             "Set AI_MODEL, or MINDS_BUILDER_API_KEY so Minds write the dates."
         )
     if PRODUCTION and not mail_ready():
         raise RuntimeError(
             "Production requires SMTP_HOST and SMTP_FROM for email verification and recovery."
+        )
+    if not PRODUCTION and (
+        not os.getenv("AI_API_KEY") or (not os.getenv("AI_MODEL") and not minds_enabled())
+    ):
+        logging.warning(
+            "Local start without AI_API_KEY and AI_MODEL or MINDS_BUILDER_API_KEY. "
+            "The site will load. Dates and safety screening wait until those are set."
         )
     init_db()
     yield
@@ -285,6 +292,9 @@ async def register(
         db.flush()
     except IntegrityError:
         raise HTTPException(409, "This account cannot be registered. Try signing in.")
+    from .faces import apply_auto_face
+
+    apply_auto_face(u)
     if minds_enabled():
         try:
             await bind_mind(db, u)
@@ -388,7 +398,11 @@ def _queue_teach(background: BackgroundTasks, user, text: str):
 
 @app.get("/api/me")
 def get_me(request: Request, db: Session = Depends(get_db)):
+    from .faces import apply_auto_face
+
     u, s = authenticate(request, db)
+    if apply_auto_face(u):
+        db.commit()
     return {"user": own_profile(u), "csrf": s.csrf, "mode": "live"}
 
 
@@ -416,6 +430,9 @@ def profile(
         )
     for key, value in body.model_dump().items():
         setattr(u, key, value)
+    from .faces import apply_auto_face
+
+    apply_auto_face(u)
     db.execute(
         update(User)
         .where(User.id == u.id)
@@ -1112,13 +1129,25 @@ def island_activity(db, u):
     agents = db.scalar(select(func.count()).select_from(User).where(User.discovery == True, User.disabled == False)) or 0
     scores = [(s.output or {}).get("assessment", {}).get("score") for s in done_today]
     scores = [x for x in scores if x is not None]
+    shown = live_dates(db, u, active)
+    # Real dates stay on top. The filler sits underneath only while agents are quiet.
+    if not active:
+        from .ambient import filler_dates
+
+        extra = filler_dates()
+        shown = [*shown, *extra]
+        agents = max(agents, 20)
+        today = max(today, len(extra))
+        for row in extra:
+            if row["type"] in by_type:
+                by_type[row["type"]] += 1
     return {
         "agents": agents,
-        "active": len(active),
+        "active": len(active) if active else len(shown),
         "today": today,
         "avg_resonance": round(sum(scores) / len(scores)) if scores else None,
         "by_type": by_type,
-        "live": live_dates(db, u, active),
+        "live": shown,
         "simulated": False,
     }
 
@@ -1576,6 +1605,13 @@ if static.exists():
     @app.get("/")
     def home():
         return FileResponse(static / "index.html")
+
+    @app.get("/favicon.svg")
+    def favicon():
+        icon = static / "favicon.svg"
+        if not icon.exists():
+            raise HTTPException(404)
+        return FileResponse(icon, media_type="image/svg+xml")
 
 
 @app.post("/api/transcribe")

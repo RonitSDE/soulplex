@@ -199,7 +199,7 @@ export function FaceStudio() {
   const u = user!;
   const current = u.face as any;
   const [mode, setMode] = useState<"illustrated" | "photo">(current?.kind === "photo" ? "photo" : "illustrated");
-  const [spec, setSpec] = useState<FaceSpec>(() => ({ ...defaultSpec(u.id), ...(current?.kind === "illustrated" ? current.spec : {}) }));
+  const [spec, setSpec] = useState<FaceSpec>(() => ({ ...defaultSpec(u.id, u.gender), ...(current?.kind === "illustrated" ? current.spec : {}) }));
   const [photo, setPhoto] = useState<{ photo: string; public: string; style: PhotoStyle } | null>(null);
   const [reveal, setReveal] = useState<"mutual" | "everyone">(current?.reveal ?? "mutual");
   const [mine, setMine] = useState(false);
@@ -269,7 +269,7 @@ export function FaceStudio() {
         {mode === "illustrated" ? (
           <>
             <Illustrated spec={spec} setSpec={setSpec} hue={u.hue} seed={u.id} />
-            <button type="button" className="btn ghost sm" onClick={() => setSpec(defaultSpec(u.id + Math.random()))}>
+            <button type="button" className="btn ghost sm" onClick={() => setSpec(defaultSpec(u.id + Math.random(), u.gender))}>
               <Shuffle size={14} /> Surprise me
             </button>
           </>

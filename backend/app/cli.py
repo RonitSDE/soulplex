@@ -5,7 +5,7 @@ import secrets
 import time
 from sqlalchemy import select
 from .db import init_db, SessionLocal, User, Invite
-from .security import DEMO, digest
+from .security import digest
 
 p = argparse.ArgumentParser()
 p.add_argument("command", choices=["init", "promote", "invite"])
@@ -19,7 +19,7 @@ if args.command == "promote":
         u = db.scalar(select(User).where(User.email == args.email))
         if not u:
             raise SystemExit("Register the operator account first.")
-        if not DEMO and not u.email_verified:
+        if not u.email_verified:
             raise SystemExit("Verify the operator email before promotion.")
         u.role = "admin"
         db.commit()

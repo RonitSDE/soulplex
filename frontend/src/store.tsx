@@ -47,7 +47,7 @@ function readHash() {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [mode, setMode] = useState("demo");
+  const [mode, setMode] = useState("live");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [memories, setMemories] = useState<Memory[]>([]);

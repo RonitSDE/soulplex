@@ -5,7 +5,6 @@ x-app: &app
   env_file: .env
   environment:
     APP_ENV: production
-    DEMO_MODE: "false"
     DATABASE_URL: postgresql+psycopg://soulplex:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/soulplex
   restart: unless-stopped
   read_only: true

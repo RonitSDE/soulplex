@@ -14,7 +14,7 @@ Requirements: Docker Engine/Desktop with Compose v2, about 3 GB available storag
 docker compose up --build -d
 ```
 
-Open **http://localhost:8000**. Choose **As Maya**. Arjun and the operator are also available through the fictional demo switcher. No API key or paid model is required for the demo.
+Open **http://localhost:8000** and create an account. The API needs `AI_API_KEY` plus `AI_MODEL` or `MINDS_BUILDER_API_KEY`. Production also needs SMTP so verification email can be sent.
 
 ```bash
 docker compose logs -f api worker

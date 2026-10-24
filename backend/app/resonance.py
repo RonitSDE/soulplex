@@ -339,10 +339,7 @@ SYSTEM = (
 
 async def assess(a: dict, b: dict, dialogue: list[dict]) -> tuple[dict, int]:
     from .ai import structured, ProviderError
-    from .security import DEMO
 
-    if DEMO:
-        return finalize(apply_signals(heuristic(a, b, dialogue), a, b), "keyword-demo"), 0
     try:
         m, tokens = await structured(
             SYSTEM,

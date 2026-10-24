@@ -30,7 +30,7 @@ const blank = {
 };
 
 export function Landing() {
-  const { mode, busy, perform, applySession, notify, go, openSetup, setGuest, wantAuth, askAuth } = useStore();
+  const { busy, perform, applySession, notify, go, openSetup, setGuest, wantAuth, askAuth } = useStore();
   const [sheet, setSheet] = useState<"" | "login" | "register" | "reset">("");
   const [resetToken, setResetToken] = useState("");
   const [f, setF] = useState({ ...blank, email: "", password: "", consent: false });
@@ -61,12 +61,6 @@ export function Landing() {
     return () => removeEventListener("keydown", onKey);
   }, [sheet]);
 
-  const demo = (p: string) =>
-    perform(async () => {
-      applySession(await api("/auth/demo/" + p, "POST"));
-      go(p === "operator" ? "operator" : "home");
-    });
-
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     perform(async () => {
@@ -88,11 +82,7 @@ export function Landing() {
       if (sheet === "register") {
         go("home");
         openSetup(0);
-        notify(
-          mode === "demo"
-            ? "Welcome! Start by teaching your agent who you are."
-            : "Check your email for a verification link, then teach your agent.",
-        );
+        notify("Check your email for a verification link, then teach your agent.");
       } else go("home");
     });
   };
@@ -134,17 +124,6 @@ export function Landing() {
           <button className="btn ghost lg watch-cta" onClick={() => setGuest(true)}>
             <Eye size={18} /> Watch live dates, no sign-up
           </button>
-          {mode === "demo" && (
-            <div className="demo-pick">
-              <span>or explore as</span>
-              <button className="persona" disabled={busy} onClick={() => demo("maya")}>
-                <Wisp hue={330} size={28} face={lface("Maya")} /> Maya
-              </button>
-              <button className="persona" disabled={busy} onClick={() => demo("arjun")}>
-                <Wisp hue={195} size={28} face={lface("Arjun")} /> Arjun
-              </button>
-            </div>
-          )}
         </div>
         <div className="hero-stats">
           <div>
@@ -271,12 +250,7 @@ export function Landing() {
         </div>
         <footer className="land-foot">
           <Brand small />
-          <span>Independent Web2 pilot · Dubai &amp; Delhi NCR · Demo uses fictional people.</span>
-          {mode === "demo" && (
-            <button className="link" onClick={() => demo("operator")}>
-              Operator view
-            </button>
-          )}
+          <span>Independent Web2 pilot · Dubai &amp; Delhi NCR</span>
         </footer>
       </section>
 
@@ -383,8 +357,8 @@ export function Landing() {
                   onChange={(e) => setF({ ...f, consent: e.target.checked })}
                 />
                 <span>
-                  I am 18 or older. I agree to storing my profile, chat and approved memory to provide this service. In
-                  live mode, text is processed by the configured AI provider.
+                  I am 18 or older. I agree to storing my profile, chat and approved memory to provide this service. Text is
+                  processed by the configured AI provider.
                 </span>
               </label>
             )}
@@ -400,7 +374,7 @@ export function Landing() {
                     : "Create my agent"}
               <ArrowRight size={16} />
             </button>
-            {sheet === "login" && mode !== "demo" && (
+            {sheet === "login" && (
               <button type="button" className="link" onClick={() => setSheet("reset")}>
                 Forgot password?
               </button>
@@ -409,9 +383,6 @@ export function Landing() {
               <button type="button" className="link" onClick={() => setSheet("login")}>
                 Back to sign in
               </button>
-            )}
-            {mode === "demo" && sheet !== "reset" && (
-              <p className="fine">Demo mode: use fictional details only.</p>
             )}
           </form>
         </div>

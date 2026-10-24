@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, Square, Trash2 } from "lucide-react";
 import { csrf } from "./api";
 export function VoiceInput({
-  mode,
   onTranscript,
   onError,
 }: {
-  mode: string;
   onTranscript: (s: string) => void;
   onError: (s: string) => void;
 }) {
@@ -117,14 +115,10 @@ export function VoiceInput({
             <button
               type="button"
               className="button small secondary"
-              disabled={busy || mode === "demo"}
+              disabled={busy}
               onClick={transcribe}
             >
-              {busy
-                ? "Transcribing…"
-                : mode === "demo"
-                  ? "Transcription needs live mode"
-                  : "Transcribe with AI"}
+              {busy ? "Transcribing…" : "Transcribe with AI"}
             </button>
             <button
               type="button"

@@ -28,7 +28,6 @@ def _load_dotenv():
 _load_dotenv()
 
 PRODUCTION = os.getenv("APP_ENV", "development") == "production"
-DEMO = os.getenv("DEMO_MODE", "true").lower() == "true"
 ORIGIN = (
     os.getenv("APP_ORIGIN")
     or os.getenv("RENDER_EXTERNAL_URL")

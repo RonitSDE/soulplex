@@ -26,25 +26,19 @@ from .auth_flow import mail_ready, issue_token, consume_token, send_auth_email
 
 @asynccontextmanager
 async def lifespan(app):
-    if PRODUCTION and (not ORIGIN.startswith("https://") or DEMO):
+    if PRODUCTION and not ORIGIN.startswith("https://"):
+        raise RuntimeError("Production requires an HTTPS APP_ORIGIN.")
+    if not os.getenv("AI_API_KEY"):
+        raise RuntimeError("AI_API_KEY is required for safety screening.")
+    if not os.getenv("AI_MODEL") and not minds_enabled():
         raise RuntimeError(
-            "Production requires HTTPS APP_ORIGIN and DEMO_MODE=false. Use development only for local or synthetic demos."
-        )
-    if not DEMO and not os.getenv("AI_API_KEY"):
-        raise RuntimeError("Live mode requires AI_API_KEY for safety screening.")
-    if not DEMO and not os.getenv("AI_MODEL") and not minds_enabled():
-        raise RuntimeError(
-            "Live mode requires AI_MODEL, or MINDS_BUILDER_API_KEY so Minds write the dates."
+            "Set AI_MODEL, or MINDS_BUILDER_API_KEY so Minds write the dates."
         )
     if PRODUCTION and not mail_ready():
         raise RuntimeError(
             "Production requires SMTP_HOST and SMTP_FROM for email verification and recovery."
         )
     init_db()
-    if DEMO:
-        from .seed import seed
-
-        seed()
     yield
 
 
@@ -257,7 +251,7 @@ def health(db: Session = Depends(get_db)):
     return {
         "ok": True,
         "version": "0.5.0",
-        "mode": "demo" if DEMO else "live",
+        "mode": "live",
         "minds": minds_enabled(),
         "match_line": match_line(),
         "venues": VENUES,
@@ -275,7 +269,7 @@ async def register(
     email = body.email.lower()
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
         raise HTTPException(422, "Enter a valid email.")
-    if not DEMO and not mail_ready():
+    if not mail_ready():
         raise HTTPException(503, "Email delivery is unavailable. Try again later.")
     data = body.model_dump(exclude={"email", "password", "consent"})
     data["discovery"] = False
@@ -283,7 +277,7 @@ async def register(
         **data,
         email=email,
         password=hash_password(body.password),
-        email_verified=DEMO,
+        email_verified=False,
         synthetic=False,
     )
     db.add(u)
@@ -297,14 +291,12 @@ async def register(
         except ProviderError as exc:
             db.rollback()
             raise HTTPException(503, str(exc))
-    if not DEMO:
-        raw = issue_token(db, u, "verify")
+    raw = issue_token(db, u, "verify")
     csrf = new_session(db, u, response)
     log(db, u, "service_consent_v1")
     db.commit()
-    if not DEMO:
-        send_auth_email(u.email, raw, "verify")
-    return {"user": own_profile(u), "csrf": csrf, "mode": "demo" if DEMO else "live"}
+    send_auth_email(u.email, raw, "verify")
+    return {"user": own_profile(u), "csrf": csrf, "mode": "live"}
 
 
 @app.post("/api/auth/login")
@@ -321,14 +313,14 @@ async def login(
     await _attach_mind(db, u)
     csrf = new_session(db, u, response)
     db.commit()
-    return {"user": own_profile(u), "csrf": csrf, "mode": "demo" if DEMO else "live"}
+    return {"user": own_profile(u), "csrf": csrf, "mode": "live"}
 
 
 @app.post("/api/auth/resend-verification")
 def resend_verification(request: Request, db: Session = Depends(get_db)):
     u = me(request, db, True)
     auth_limit(request, db, u.email)
-    if not u.email_verified and not DEMO:
+    if not u.email_verified:
         raw = issue_token(db, u, "verify")
         db.commit()
         send_auth_email(u.email, raw, "verify")
@@ -348,18 +340,17 @@ def verify_email(body: AuthLink, request: Request, db: Session = Depends(get_db)
 @app.post("/api/auth/request-reset")
 def request_reset(body: EmailAddress, request: Request, db: Session = Depends(get_db)):
     auth_limit(request, db, body.email)
-    if not DEMO:
-        u = db.scalar(
-            select(User).where(User.email == body.email.lower(), User.disabled == False)
-        )
-        if u:
-            raw = issue_token(db, u, "reset")
-            db.commit()
-            try:
-                send_auth_email(u.email, raw, "reset")
-            except HTTPException:
-                # Do not expose whether this email is registered.
-                logging.warning("Password-reset email could not be delivered.")
+    u = db.scalar(
+        select(User).where(User.email == body.email.lower(), User.disabled == False)
+    )
+    if u:
+        raw = issue_token(db, u, "reset")
+        db.commit()
+        try:
+            send_auth_email(u.email, raw, "reset")
+        except HTTPException:
+            # Do not expose whether this email is registered.
+            logging.warning("Password-reset email could not be delivered.")
     return {
         "ok": True,
         "message": "If that account exists, a reset link has been sent.",
@@ -380,22 +371,6 @@ def reset_password(
     return {"ok": True}
 
 
-@app.post("/api/auth/demo/{persona}")
-async def demo_login(
-    persona: str, request: Request, response: Response, db: Session = Depends(get_db)
-):
-    if not DEMO:
-        raise HTTPException(404)
-    if persona not in ("maya", "arjun", "operator"):
-        raise HTTPException(404)
-    auth_limit(request, db)
-    u = db.scalar(select(User).where(User.email == persona + "@demo.soulplex.local"))
-    await _attach_mind(db, u)
-    csrf = new_session(db, u, response)
-    db.commit()
-    return {"user": own_profile(u), "csrf": csrf, "mode": "demo"}
-
-
 async def _attach_mind(db, user):
     """Give an existing account a Mind. Sign-in still succeeds if Hello Minds is down."""
     if not minds_enabled() or not user or user.mind_id:
@@ -414,7 +389,7 @@ def _queue_teach(background: BackgroundTasks, user, text: str):
 @app.get("/api/me")
 def get_me(request: Request, db: Session = Depends(get_db)):
     u, s = authenticate(request, db)
-    return {"user": own_profile(u), "csrf": s.csrf, "mode": "demo" if DEMO else "live"}
+    return {"user": own_profile(u), "csrf": s.csrf, "mode": "live"}
 
 
 @app.post("/api/auth/logout")
@@ -435,7 +410,7 @@ def profile(
 ):
     u = me(request, db, True)
     validate_profile(body)
-    if body.discovery and (not u.verified or (not DEMO and not u.email_verified)):
+    if body.discovery and (not u.verified or not u.email_verified):
         raise HTTPException(
             409, "An operator must verify your eligibility before discovery opens."
         )
@@ -556,7 +531,7 @@ def chat_history(request: Request, db: Session = Depends(get_db)):
 @app.post("/api/chat")
 async def chat(body: Chat, request: Request, db: Session = Depends(get_db)):
     u = me(request, db, True)
-    if not DEMO and not u.email_verified:
+    if not u.email_verified:
         raise HTTPException(403, "Verify your email before using the AI guide.")
     if minds_enabled():
         try:
@@ -566,7 +541,7 @@ async def chat(body: Chat, request: Request, db: Session = Depends(get_db)):
     quota(db, "chat:" + u.id, 40)
     db.commit()
     u = me(request, db, True)
-    if minds_enabled() and not DEMO:
+    if minds_enabled():
         await moderate(body.message)
     history = db.scalars(
         select(Message).where(Message.user_id == u.id).order_by(Message.created)
@@ -588,8 +563,7 @@ async def chat(body: Chat, request: Request, db: Session = Depends(get_db)):
         except ProviderError as exc:
             raise HTTPException(503, str(exc))
         if spoken:
-            if not DEMO:
-                await moderate(spoken)
+            await moderate(spoken)
             result.reply = spoken
         else:
             result.reply += " Your agent is still thinking. Ask again in a moment."
@@ -764,7 +738,7 @@ def eligible_partners(db, u):
 
 
 def discovery_blocker(db, u):
-    if not u.discovery or not u.verified or (not DEMO and not u.email_verified):
+    if not u.discovery or not u.verified or not u.email_verified:
         return "Complete your profile, operator verification and discovery opt-in."
     if not memories(db, u.id, True):
         return "Approve at least one shareable memory first."
@@ -1020,8 +994,6 @@ def explore(body: Explore, request: Request, db: Session = Depends(get_db)):
 def scenes(request: Request, db: Session = Depends(get_db)):
     u = me(request, db)
     result = []
-    if DEMO_INVITES:
-        demo_invite(db, u)
     for s in db.scalars(
         select(Scene)
         .where(or_(Scene.a == u.id, Scene.b == u.id))
@@ -1031,35 +1003,6 @@ def scenes(request: Request, db: Session = Depends(get_db)):
         if scene_ok(db, s):
             result.append(scene_data(db, s, u))
     return result
-
-
-DEMO_INVITES = DEMO and os.getenv("DEMO_INVITES", "true").lower() == "true"
-
-
-def demo_invite(db, u):
-    """Demo only: fictional people's agents occasionally invite yours on a date."""
-    if u.synthetic and u.role == "admin" or discovery_blocker(db, u):
-        return
-    incoming = db.scalars(select(Scene).where(Scene.b == u.id).order_by(Scene.created.desc())).all()
-    if incoming and time.time() - incoming[0].created < 75:
-        return
-    open_ = [s for s in incoming if s.status in ("invited", "queued", "running")]
-    if len(open_) >= 2 or len(incoming) >= 6:
-        return
-    met = {s.a if s.b == u.id else s.b for s in db.scalars(select(Scene).where(or_(Scene.a == u.id, Scene.b == u.id)))}
-    for p, facts in eligible_partners(db, u):
-        if p.synthetic and p.id not in met:
-            venue = choose_type(db, p, u, "auto")
-            key = scene_key(p.id, u.id, venue, p.memory_version, u.memory_version)
-            if db.scalar(select(Scene.id).where(Scene.dedupe_key == key)):
-                continue
-            s = Scene(a=p.id, b=u.id, venue=venue, a_version=p.memory_version, b_version=u.memory_version,
-                      dedupe_key=key, status="queued" if u.auto_accept is not False else "invited")
-            db.add(s)
-            db.flush()
-            db.add_all([Participation(scene_id=s.id, user_id=p.id), Participation(scene_id=s.id, user_id=u.id)])
-            db.commit()
-            return
 
 
 @app.get("/api/dates")
@@ -1586,7 +1529,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
                 }
             ),
         },
-        "mode": "demo" if DEMO else "live",
+        "mode": "live",
     }
 
 
@@ -1600,7 +1543,7 @@ def admin_user(
         raise HTTPException(404)
     if u.role == "admin":
         raise HTTPException(409, "Manage operators using the CLI.")
-    if body.verified and not body.disabled and not DEMO and not u.email_verified:
+    if body.verified and not body.disabled and not u.email_verified:
         raise HTTPException(409, "The member must first verify their email.")
     u.verified = body.verified
     u.disabled = body.disabled
@@ -1640,7 +1583,7 @@ async def transcribe(request: Request, db: Session = Depends(get_db)):
     from .ai import transcribe_audio
 
     u = me(request, db, True)
-    if not DEMO and not u.email_verified:
+    if not u.email_verified:
         raise HTTPException(403, "Verify your email before using voice input.")
     quota(db, "voice:" + u.id, 10)
     db.commit()

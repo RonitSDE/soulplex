@@ -1,7 +1,8 @@
+import os
 import secrets
 from sqlalchemy import select
 from .db import SessionLocal, User, Memory, Message
-from .security import hash_password, DEMO
+from .security import hash_password
 from .about import facts as about_facts
 from .demo_about import ABOUT
 
@@ -10,8 +11,7 @@ INTENTS = {"leila": "marriage", "omar": "marriage", "priya": "marriage", "aditi"
 
 
 def seed():
-    if not DEMO:
-        return
+    """Fixture cast for tests. The running app does not call this."""
     with SessionLocal() as db:
         W, M = ["man"], ["woman"]
         people = [
@@ -146,7 +146,9 @@ def seed():
                 continue
             u = User(
                 email=email,
-                password=hash_password(secrets.token_urlsafe(32)),
+                password=hash_password(
+                    os.getenv("SOULPLEX_FIXTURE_PASSWORD", secrets.token_urlsafe(32))
+                ),
                 name=name,
                 age=age,
                 city=city,
@@ -157,8 +159,9 @@ def seed():
                 intent=INTENTS.get(key, "relationship"),
                 contact=key + "@example.invalid",
                 verified=True,
+                email_verified=True,
                 discovery=key != "operator",
-                synthetic=True,
+                synthetic=False,
                 public_dates=key != "operator",  # fictional members: anyone may watch their dates
                 role="admin" if key == "operator" else "member",
                 memory_version=1,

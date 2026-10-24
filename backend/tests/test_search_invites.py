@@ -76,15 +76,3 @@ def test_declined_invitation_never_runs(client, login):
     assert client.post(f"/api/scenes/{sid}/respond", json={"accept": False}).json()["status"] == "declined"
     drain()
     assert client.get("/api/scenes/" + sid).json()["status"] == "declined"
-
-
-def test_demo_agents_send_invitations(client, login, monkeypatch):
-    import app.main as m
-
-    monkeypatch.setattr(m, "DEMO_INVITES", True)
-    login("maya")
-    scenes = client.get("/api/scenes").json()
-    incoming = [s for s in scenes if s["incoming"]]
-    assert len(incoming) == 1 and incoming[0]["partner"]["name"] != "Maya"
-    # Rate limited: polling again right away doesn't create another.
-    assert len([s for s in client.get("/api/scenes").json() if s["incoming"]]) == 1

@@ -1,6 +1,5 @@
 import { useEffect, type ReactNode } from "react";
 import { Globe2, Brain, Compass, Coffee, LineChart, Settings, ShieldCheck, LogOut } from "lucide-react";
-import { api } from "../api";
 import { useStore } from "../store";
 import { Brand, Wisp } from "../ui";
 import { withWorld } from "../world/WorldCanvas";
@@ -18,7 +17,7 @@ const NAV = [
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { user, page, go, scenes, candidates, mode, perform, applySession, logout, memories, setup, openSetup } = useStore();
+  const { user, page, go, scenes, candidates, logout, memories, setup, openSetup } = useStore();
   const pending = scenes.filter(
     (s) => s.status === "completed" && !s.stale && !s.mine.reviewed && s.mine.decision === "pending",
   ).length;
@@ -79,27 +78,6 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      {mode === "demo" && (
-        <div className="demo-bar glass">
-          <span className="dot" /> Fictional demo
-          <span className="sep" />
-          <span className="muted">View as</span>
-          {["maya", "arjun", "operator"].map((p) => (
-            <button
-              key={p}
-              className={user!.email.startsWith(p + "@") ? "on" : ""}
-              onClick={() =>
-                perform(async () => {
-                  applySession(await api("/auth/demo/" + p, "POST"));
-                  go(p === "operator" ? "operator" : "home");
-                })
-              }
-            >
-              {p[0].toUpperCase() + p.slice(1)}
-            </button>
-          ))}
-        </div>
-      )}
       <main className="stage">{children}</main>
       {setup !== null && <SetupWizard start={setup} onClose={() => openSetup(null)} />}
     </div>

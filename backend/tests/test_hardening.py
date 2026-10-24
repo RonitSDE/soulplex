@@ -15,8 +15,6 @@ from test_flows import REG
 
 def live_for_test(monkeypatch):
     sent = []
-    monkeypatch.setattr(main, "DEMO", False)
-    monkeypatch.setattr(domain, "DEMO", False)
     monkeypatch.setattr(main, "mail_ready", lambda: True)
     monkeypatch.setattr(
         main,

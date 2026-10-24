@@ -91,8 +91,16 @@ def test_registration_verification_and_delete(client):
         )
     }
     assert client.put("/api/profile", json=body).status_code == 409
-    client.post(
-        "/api/chat", json={"message": "I grew up spending weekends with my cousins."}
+    with SessionLocal() as db:
+        account = db.get(User, u["id"])
+        account.email_verified = True
+        db.commit()
+    assert (
+        client.post(
+            "/api/chat",
+            json={"message": "I grew up spending weekends with my cousins."},
+        ).status_code
+        == 200
     )
     exported = client.get("/api/export").json()
     assert exported["chat"] and exported["memories"]

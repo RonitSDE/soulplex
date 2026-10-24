@@ -25,7 +25,7 @@ def test_assessment_is_scored_and_perspective_is_private(client, login):
     ]
     assert "perspectives" not in a
     assert a["perspective"]["growth"]
-    assert a["method"] == "keyword-demo"
+    assert a["method"] == "keyword"
     # Partner sees their own perspective, not Maya's.
     login("arjun")
     other = client.get("/api/scenes/" + sid).json()["output"]["assessment"]
@@ -85,6 +85,6 @@ def test_insights_aggregate_learnings(client, login):
 def test_thin_profiles_cannot_look_like_perfect_matches():
     a = {"id": "a", "name": "A", "facts": [{"id": "1", "category": "interests", "content": "I love books"}]}
     b = {"id": "b", "name": "B", "facts": [{"id": "2", "category": "interests", "content": "Books are my life"}]}
-    r = finalize(heuristic(a, b, []), "keyword-demo")
+    r = finalize(heuristic(a, b, []), "keyword")
     assert r["confidence"] == "low"
     assert r["score"] < 65

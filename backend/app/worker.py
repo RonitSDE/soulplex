@@ -7,7 +7,7 @@ from .domain import scene_ok, stale, actor_data
 from .ai import run_dialogue, ProviderError
 from .minds import enabled as minds_enabled, bind_mind, judge_score
 from .resonance import assess
-from .security import DEMO, log
+from .security import log
 
 logging.basicConfig(level=logging.INFO)
 
@@ -99,8 +99,6 @@ async def process_one():
                 s.model = (
                     "hellominds"
                     if minds_enabled() and aa.get("mind_id") and bb.get("mind_id")
-                    else "deterministic-demo"
-                    if DEMO
                     else os.environ.get("AI_MODEL", "")
                 )
                 s.status = "completed"

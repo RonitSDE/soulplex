@@ -1,6 +1,6 @@
 import asyncio
 import pytest
-from app import ai
+from provider_stub import run_dialogue
 from app.date_types import DATE_TYPES, pick
 from app.worker import process_one
 
@@ -16,7 +16,7 @@ B = {"id": "b", "name": "Bilal", "facts": [{"id": "3", "category": "lifestyle", 
 
 @pytest.mark.parametrize("type_id", list(DATE_TYPES))
 def test_every_date_type_runs_four_steps(type_id):
-    out, _ = asyncio.run(ai.run_dialogue(type_id, A, B))
+    out, _ = asyncio.run(run_dialogue(type_id, A, B))
     lines = out["dialogue"]
     assert len(lines) == 8 and [l["stage"] for l in lines] == [0, 0, 1, 1, 2, 2, 3, 3]
     assert all(l["fact_ids"] and l["mood"] for l in lines)

@@ -170,7 +170,7 @@ function AddTrait() {
 }
 
 function Interview() {
-  const { messages, perform, load, mode, notify, busy, user } = useStore();
+  const { messages, perform, load, notify, busy, user } = useStore();
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState("");
   const end = useRef<HTMLDivElement>(null);
@@ -233,7 +233,7 @@ function Interview() {
           {STATIC ? (
             <span className="fine">Press Enter to send</span>
           ) : (
-            <VoiceInput mode={mode} onTranscript={(t) => setDraft((d) => d + (d ? "\n" : "") + t)} onError={(e) => notify(e, "err")} />
+            <VoiceInput onTranscript={(t) => setDraft((d) => d + (d ? "\n" : "") + t)} onError={(e) => notify(e, "err")} />
           )}
           <button className="btn primary" disabled={busy || draft.trim().length < 2}>
             <Send size={16} /> Send

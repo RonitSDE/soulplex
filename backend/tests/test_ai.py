@@ -57,8 +57,6 @@ def test_provider_failure_never_becomes_demo(monkeypatch):
 
 
 def test_interview_rejects_invented_memories(monkeypatch):
-    monkeypatch.setattr(ai, "DEMO", False)
-
     async def safe(text):
         pass
 
@@ -79,8 +77,6 @@ def test_interview_rejects_invented_memories(monkeypatch):
 
 
 def test_scene_cannot_reference_other_persons_private_memory(monkeypatch):
-    monkeypatch.setattr(ai, "DEMO", False)
-
     async def fake(*args):
         return ai.Turn(text="I have a fact.", fact_ids=["someone-elses-fact"]), 10
 

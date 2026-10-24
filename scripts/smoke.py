@@ -1,4 +1,4 @@
-"""Run an isolated real HTTP/API/worker smoke with fictional data. No API keys."""
+"""Check that a local API starts and no longer exposes demo sign-in."""
 
 import os
 import socket
@@ -18,8 +18,9 @@ origin = f"http://127.0.0.1:{port}"
 with tempfile.TemporaryDirectory() as tmp:
     env = {
         **os.environ,
-        "DEMO_MODE": "true",
         "APP_ENV": "development",
+        "AI_API_KEY": "test-key",
+        "AI_MODEL": "test-model",
         "DATABASE_URL": "sqlite:///" + str(Path(tmp) / "smoke.db"),
         "APP_ORIGIN": origin,
         "STATIC_DIR": str(root / "frontend/dist"),
@@ -56,37 +57,11 @@ with tempfile.TemporaryDirectory() as tmp:
                 raise AssertionError("API failed to start")
             index = client.get("/")
             assert index.status_code == 200 and "Soulplex" in index.text
-            r = client.post("/api/auth/demo/maya")
-            r.raise_for_status()
-            client.headers["X-CSRF-Token"] = r.json()["csrf"]
-            partner = client.get("/api/candidates").json()["candidates"][0]
-            r = client.post(
-                "/api/scenes", json={"partner_id": partner["id"], "venue": "garden"}
-            )
-            r.raise_for_status()
-            sid = r.json()["id"]
-            assert client.get("/api/scenes/" + sid).json()["status"] == "queued"
-            worker = subprocess.Popen(
-                [sys.executable, "-m", "app.worker"],
-                cwd=root / "backend",
-                env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            processes.append(worker)
-            for _ in range(100):
-                result = client.get("/api/scenes/" + sid).json()
-                if result["status"] == "completed":
-                    break
-                assert result["status"] != "failed", result
-                time.sleep(0.1)
-            else:
-                raise AssertionError("Worker did not complete the scene")
-            assert len(result["output"]["dialogue"]) == 6 and result["contact"] is None
+            health = client.get("/api/health")
+            assert health.status_code == 200 and health.json()["mode"] == "live"
+            assert client.post("/api/auth/demo/maya").status_code == 404
             assert client.get("/api/openapi.json").status_code == 200
-            print(
-                "PASS: compiled frontend served; HTTP auth and candidates; durable queued scene completed by separate worker; six turns; contact stays hidden."
-            )
+            print("PASS: API is live and demo sign-in is gone.")
     finally:
         for p in reversed(processes):
             p.terminate()

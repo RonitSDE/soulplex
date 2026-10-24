@@ -36,8 +36,6 @@ envVarGroups:
     envVars:
       - key: APP_ENV
         value: production
-      - key: DEMO_MODE
-        value: "false"
       - key: PORT
         value: "8000"
       - key: AI_BASE_URL

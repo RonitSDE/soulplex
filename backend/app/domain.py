@@ -2,7 +2,6 @@ import hashlib
 from sqlalchemy import select, or_, and_
 from fastapi import HTTPException
 from .db import User, Memory, Block, Scene, Participation
-from .security import DEMO
 from .faces import view as face_view
 from .about import violates, completion
 from .date_types import spot_for
@@ -113,7 +112,8 @@ def base_ok(db, a, b):
         and b.discovery
         and a.verified
         and b.verified
-        and (DEMO or (a.email_verified and b.email_verified))
+        and a.email_verified
+        and b.email_verified
         and a.age >= 18
         and b.age >= 18
         and a.city == b.city
@@ -121,7 +121,8 @@ def base_ok(db, a, b):
         and b.gender in a.seeking
         and a.gender in b.seeking
         and not blocked(db, a.id, b.id)
-        and (DEMO or (not a.synthetic and not b.synthetic))
+        and not a.synthetic
+        and not b.synthetic
     )
 
 

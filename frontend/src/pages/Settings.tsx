@@ -12,7 +12,7 @@ const GENDERS = [
 ];
 
 export function Settings() {
-  const { user, setUser, perform, busy, load, logout, mode, notify } = useStore();
+  const { user, setUser, perform, busy, load, logout, notify } = useStore();
   const [p, setP] = useState({ ...user! });
   const [pw, setPw] = useState("");
   const [delAsk, setDelAsk] = useState(false);
@@ -186,7 +186,7 @@ export function Settings() {
           {user!.verified ? "eligibility verified" : "awaiting operator verification"}
         </p>
         <div className="btn-row">
-          {mode !== "demo" && !user!.email_verified && (
+          {!user!.email_verified && (
             <button
               className="btn ghost sm"
               onClick={() => perform(async () => void (await api("/auth/resend-verification", "POST")), "Verification link sent.")}

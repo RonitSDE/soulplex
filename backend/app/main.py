@@ -13,6 +13,7 @@ from .db import *
 from .security import *
 from .domain import *
 from .ai import interview, moderate, contains_contact, QUESTIONS, VENUES, ProviderError
+from .studio import may_auto_join, may_start_virtual, pilot_metrics, report_counts, suspicious
 from .minds import (
     enabled as minds_enabled,
     bind_mind,
@@ -160,7 +161,7 @@ class DirectText(Strict):
 
 class MemoryEdit(Strict):
     content: str = Field(min_length=1, max_length=600)
-    visibility: Literal["private", "shareable"]
+    visibility: Literal["private", "twin", "shareable"]
     status: Literal["approved", "rejected"]
     expected_version: int
 
@@ -170,7 +171,7 @@ class NewTrait(Strict):
         "backstory", "values", "lifestyle", "communication", "future", "interests", "boundaries"
     ]
     content: str = Field(min_length=3, max_length=600)
-    visibility: Literal["private", "shareable"] = "shareable"
+    visibility: Literal["private", "twin", "shareable"] = "private"
 
 
 class FaceInput(Strict):
@@ -222,6 +223,7 @@ class ReportInput(Strict):
 class AdminEdit(Strict):
     verified: bool
     disabled: bool
+    identity_status: Literal["unverified", "pending", "verified"] | None = None
 
 
 class DeleteAccount(Strict):
@@ -286,6 +288,7 @@ async def register(
         password=hash_password(body.password),
         email_verified=False,
         synthetic=False,
+        auto_accept=False,
     )
     db.add(u)
     try:
@@ -830,6 +833,8 @@ def queue_scene(db, u, p, venue, waive=False):
     existing = db.scalar(select(Scene).where(Scene.dedupe_key == key))
     if existing:
         return existing.id, False
+    if not may_start_virtual(db, u):
+        raise HTTPException(409, "Turn on virtual dates in the Twin Permission Center before your twin can go.")
     quota(db, "scene:" + u.id, 5)
     s = Scene(
         a=u.id,
@@ -839,8 +844,7 @@ def queue_scene(db, u, p, venue, waive=False):
         b_version=p.memory_version,
         dedupe_key=key,
         waived_by=waived_by,
-        # People who turned off auto-accept decide before their agent goes.
-        status="queued" if p.auto_accept is not False else "invited",
+        status="queued" if may_auto_join(db, p) else "invited",
     )
     try:
         db.add(s)
@@ -1212,15 +1216,6 @@ async def participate(
     s, a, b = get_scene(db, sid, u)
     if s.status != "completed" or stale(s, a, b):
         raise HTTPException(409, "Review a current, completed experience first.")
-    if body.decision == "accept":
-        score = ((s.output or {}).get("assessment") or {}).get("score")
-        line = match_line()
-        if not isinstance(score, (int, float)) or isinstance(score, bool) or score < line:
-            shown = int(score) if isinstance(score, (int, float)) and not isinstance(score, bool) else "unavailable"
-            raise HTTPException(
-                422,
-                f"A connection opens at {line}% or above. This date scored {shown}.",
-            )
     if body.decision == "accept" and (
         not body.reviewed or len(body.contribution.strip()) < 5 or not u.contact
     ):
@@ -1489,8 +1484,11 @@ def delete_account(
     )
     db.execute(delete(Participation).where(Participation.scene_id.in_(ids)))
     db.execute(delete(Scene).where(Scene.id.in_(ids)))
-    for cls in (Message, Memory, AuthSession, AuthToken, Event):
+    from .db import CalibrationRun, ConsentRecord, DeletionRequest, StudioAnswer
+
+    for cls in (Message, Memory, AuthSession, AuthToken, Event, StudioAnswer, ConsentRecord, CalibrationRun):
         db.execute(delete(cls).where(cls.user_id == u.id))
+    db.execute(delete(DeletionRequest).where(DeletionRequest.user_id == u.id))
     db.execute(delete(Block).where(or_(Block.owner == u.id, Block.target == u.id)))
     db.execute(delete(Report).where(or_(Report.owner == u.id, Report.target == u.id)))
     db.execute(update(Invite).where(Invite.used_by == u.id).values(used_by="deleted"))
@@ -1510,6 +1508,7 @@ def admin(request, db, mutate=False):
 @app.get("/api/admin")
 def dashboard(request: Request, db: Session = Depends(get_db)):
     admin(request, db)
+    pilot = pilot_metrics(db)
     return {
         "members": [
             {
@@ -1520,6 +1519,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
                 "email_verified": u.email_verified,
                 "disabled": u.disabled,
                 "synthetic": u.synthetic,
+                "identity_status": u.identity_status,
+                "flags": suspicious(u, report_counts(db).get(u.id, 0)),
             }
             for u in db.scalars(select(User).order_by(User.created.desc()).limit(200))
         ],
@@ -1549,6 +1550,11 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
                 .select_from(Participation)
                 .where(Participation.decision == "accept")
             ),
+            "onboarding_started": pilot["onboarding_started"],
+            "previews": pilot["previews"],
+            "mutual_accepts": pilot["mutual_accepts"],
+            "fidelity_compared": pilot["fidelity"]["compared"],
+            "thin_pools": len(pilot["thin_pools"]),
             "outcome_responses": len(
                 {
                     (e.user_id, e.resource)
@@ -1576,6 +1582,8 @@ def admin_user(
         raise HTTPException(409, "The member must first verify their email.")
     u.verified = body.verified
     u.disabled = body.disabled
+    if body.identity_status:
+        u.identity_status = body.identity_status
     db.execute(
         update(User)
         .where(User.id == u.id)
@@ -1597,6 +1605,10 @@ def resolve(rid: str, request: Request, db: Session = Depends(get_db)):
     db.commit()
     return {"ok": True}
 
+
+from .studio_api import router as studio_router
+
+app.include_router(studio_router)
 
 static = Path(os.getenv("STATIC_DIR", "../frontend/dist"))
 if static.exists():

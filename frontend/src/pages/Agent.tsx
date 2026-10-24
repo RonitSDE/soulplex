@@ -6,6 +6,7 @@ import { Panel, Head } from "./Shell";
 import { Wisp, Ring, Empty, Typing } from "../ui";
 import { VoiceInput } from "../VoiceInput";
 import { FaceStudio } from "./FaceStudio";
+import { CoachCard } from "./Studio";
 
 const PROMPTS: Record<string, string[]> = {
   values: ["I feel most respected when…", "A dealbreaker for me is…"],
@@ -37,11 +38,11 @@ function TraitCard({ m }: { m: Memory }) {
         </span>
         <button
           className={"vis " + m.visibility}
-          title={m.visibility === "shareable" ? "Your agent may share this" : "Private: only shapes the interview"}
-          onClick={() => save(m.visibility === "shareable" ? "private" : "shareable", "approved", m.content)}
+          title={m.visibility === "shareable" ? "An eligible twin may hear this" : m.visibility === "twin" ? "Only your twin uses this" : "Private"}
+          onClick={() => save(m.visibility === "private" ? "twin" : m.visibility === "twin" ? "shareable" : "private", "approved", m.content)}
         >
           {m.visibility === "shareable" ? <Globe2 size={13} /> : <Lock size={13} />}
-          {m.visibility === "shareable" ? "Shareable" : "Private"}
+          {m.visibility === "shareable" ? "Shareable" : m.visibility === "twin" ? "Twin only" : "Private"}
         </button>
       </div>
       {edit ? (
@@ -256,9 +257,11 @@ export function Agent() {
     <Panel wide>
       <Head eyebrow="Behaviour studio" title={<>Teach your agent <em>who you are.</em></>}>
         <button className="btn primary" onClick={() => openSetup(0)}>
-          Edit my profile · {user!.about_complete ?? 0}%
+          Teach your twin
         </button>
       </Head>
+      <CoachCard trigger="pre_introduction" />
+      <CoachCard trigger="agent" />
       <div className="studio-hero">
         <button className="studio-wisp" onClick={() => setTab("face")} title="Change your agent's face">
           <Wisp hue={user!.hue} size={84} self face={user!.face} seed={user!.id} />
@@ -279,8 +282,7 @@ export function Agent() {
             );
           })}
           <p className="fine">
-            The more dimensions you cover, the more honestly your agent can represent you, and the more confident its
-            resonance scores become.
+            The more you confirm, the more honestly your twin can represent you. Scores stay guidance. You decide who to meet.
           </p>
         </div>
       </div>

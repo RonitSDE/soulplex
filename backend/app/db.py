@@ -103,12 +103,16 @@ class User(Base):
     memory_version: Mapped[int] = mapped_column(Integer, default=0)
     face: Mapped[dict] = mapped_column(JSON, default=dict)
     about: Mapped[dict] = mapped_column(JSON, default=dict)
-    auto_accept: Mapped[bool] = mapped_column(Boolean, default=True)
+    auto_accept: Mapped[bool] = mapped_column(Boolean, default=False)
     # Opt-in: visitors (even signed out) may watch this agent's dates, including the conversation.
     public_dates: Mapped[bool] = mapped_column(Boolean, default=False)
     # Hello Minds identity for this person's agent. Empty until a Mind is awakened.
     mind_id: Mapped[str] = mapped_column(String, default="")
     mind_email: Mapped[str] = mapped_column(String, default="")
+    # Twin Studio resume point. Existing about/profile fields stay in their own columns.
+    studio: Mapped[dict] = mapped_column(JSON, default=dict)
+    age_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    identity_status: Mapped[str] = mapped_column(String, default="unverified")
     created: Mapped[float] = mapped_column(Float, default=now)
 
 
@@ -245,6 +249,67 @@ class Setting(Base):
     value: Mapped[str] = mapped_column(Text, default="")
 
 
+class StudioAnswer(Base):
+    """Versioned owner answer. Skipped stays unanswered; it is not stored as a preference."""
+
+    __tablename__ = "studio_answers"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    user_id: Mapped[str] = mapped_column(String, index=True)
+    field_id: Mapped[str] = mapped_column(String, index=True)
+    option_ids: Mapped[list] = mapped_column(JSON, default=list)
+    free_text: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String, default="answered")
+    source: Mapped[str] = mapped_column(String, default="owner")
+    schema_version: Mapped[str] = mapped_column(String, default="1.2.0")
+    permission_scope: Mapped[str] = mapped_column(String, default="private")
+    answer_version: Mapped[int] = mapped_column(Integer, default=1)
+    updated: Mapped[float] = mapped_column(Float, default=now)
+
+
+class ConsentRecord(Base):
+    __tablename__ = "consents"
+    __table_args__ = (UniqueConstraint("user_id", "purpose"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    user_id: Mapped[str] = mapped_column(String, index=True)
+    purpose: Mapped[str] = mapped_column(String)
+    granted: Mapped[bool] = mapped_column(Boolean, default=False)
+    notice_version: Mapped[str] = mapped_column(String, default="2026-10-24")
+    updated: Mapped[float] = mapped_column(Float, default=now)
+
+
+class CalibrationRun(Base):
+    """Owner choice is stored before the twin answers, and is not part of the twin prompt."""
+
+    __tablename__ = "calibrations"
+    __table_args__ = (UniqueConstraint("user_id", "scenario_id"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=uid)
+    user_id: Mapped[str] = mapped_column(String, index=True)
+    scenario_id: Mapped[str] = mapped_column(String, index=True)
+    unseen: Mapped[bool] = mapped_column(Boolean, default=False)
+    owner_option: Mapped[str] = mapped_column(String, default="")
+    owner_why: Mapped[str] = mapped_column(Text, default="")
+    owner_locked: Mapped[float] = mapped_column(Float, default=0)
+    twin_option: Mapped[str] = mapped_column(String, default="")
+    twin_summary: Mapped[str] = mapped_column(Text, default="")
+    twin_locked: Mapped[float] = mapped_column(Float, default=0)
+    twin_method: Mapped[str] = mapped_column(String, default="")
+    provider: Mapped[str] = mapped_column(String, default="")
+    prompt_hash: Mapped[str] = mapped_column(String, default="")
+    context_version: Mapped[int] = mapped_column(Integer, default=0)
+    rating: Mapped[str] = mapped_column(String, default="")
+    correction: Mapped[str] = mapped_column(Text, default="")
+    correction_status: Mapped[str] = mapped_column(String, default="")
+    created: Mapped[float] = mapped_column(Float, default=now)
+
+
+class DeletionRequest(Base):
+    __tablename__ = "deletion_requests"
+    user_id: Mapped[str] = mapped_column(String, primary_key=True)
+    status: Mapped[str] = mapped_column(String, default="requested")
+    detail: Mapped[str] = mapped_column(Text, default="")
+    updated: Mapped[float] = mapped_column(Float, default=now)
+
+
 class SchemaVersion(Base):
     __tablename__ = "schema_version"
     version: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -256,7 +321,7 @@ def init_db():
     with engine.begin() as conn:
         if not inspect(conn).has_table("schema_version"):
             Base.metadata.create_all(conn)
-            conn.execute(SchemaVersion.__table__.insert().values(version=7))
+            conn.execute(SchemaVersion.__table__.insert().values(version=8))
             return
         version = conn.scalar(select(SchemaVersion.version))
         if version == 2:
@@ -273,6 +338,9 @@ def init_db():
             version = 6
         if version == 6:
             _add_mind_columns(conn)
+            version = 7
+        if version == 7:
+            _add_studio_columns(conn)
             return
         if version == 1:
             if conn.dialect.name == "postgresql":
@@ -328,8 +396,9 @@ def init_db():
             _add_invitation_columns(conn)
             _add_public_dates_column(conn)
             _add_mind_columns(conn)
-        elif version != 7:
-            raise RuntimeError(f"Unsupported schema version {version!r}; expected 7.")
+            _add_studio_columns(conn)
+        elif version != 8:
+            raise RuntimeError(f"Unsupported schema version {version!r}; expected 8.")
 
 
 def _add_face_column(conn):
@@ -372,3 +441,14 @@ def _add_mind_columns(conn):
     conn.execute(text("ALTER TABLE users ADD COLUMN mind_email VARCHAR NOT NULL DEFAULT ''"))
     Base.metadata.create_all(conn)
     conn.execute(update(SchemaVersion).values(version=7))
+
+
+def _add_studio_columns(conn):
+    """v7 -> v8: Twin Studio resume, adult check, and identity status. Answers live in new tables."""
+    kind = "JSON" if conn.dialect.name == "postgresql" else "TEXT"
+    false = "FALSE" if conn.dialect.name == "postgresql" else "0"
+    conn.execute(text(f"ALTER TABLE users ADD COLUMN studio {kind} NOT NULL DEFAULT '{{}}'"))
+    conn.execute(text(f"ALTER TABLE users ADD COLUMN age_verified BOOLEAN NOT NULL DEFAULT {false}"))
+    conn.execute(text("ALTER TABLE users ADD COLUMN identity_status VARCHAR NOT NULL DEFAULT 'unverified'"))
+    Base.metadata.create_all(conn)
+    conn.execute(update(SchemaVersion).values(version=8))

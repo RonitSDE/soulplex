@@ -15,7 +15,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { DATE_TYPES } from "../dateTypes";
 
 export type WorldMode = "landing" | "home" | "date" | "calm";
-export type AgentInfo = { id: string; name: string; hue: number; self?: boolean; face?: string; skin?: string; hair?: string; outfit?: string };
+export type AgentInfo = { id: string; name: string; hue: number; self?: boolean; face?: string; skin?: string; hair?: string; hairStyle?: number; outfit?: string };
 export type DateInfo = {
   id?: string; // the date's id, so the same date isn't drawn twice
   type: string; // date type = island id
@@ -192,20 +192,85 @@ class Wisp {
       this.root.add(shoulder);
       this.arms.push({ shoulder, elbow });
     }
-    // head: hair-coloured back of the head + a face disc that turns toward the viewer
-    this.head.position.y = 1.25;
-    const skull = part(sharedGeo("skull", () => new THREE.SphereGeometry(0.215, MOBILE ? 10 : 24, MOBILE ? 8 : 18)), hair, 0, this.head);
-    skull.scale.set(1, 1.02, 0.95);
-    // The face wraps the front of the head as a curved cap, just outside the skull, so the
-    // eyes, nose and mouth are never hidden inside it.
-    const cap = 1.0; // half-angle in radians (~57 degrees)
-    const face = new THREE.Mesh(
-      sharedGeo("face", () => new THREE.SphereGeometry(0.226, MOBILE ? 12 : 32, MOBILE ? 10 : 24, Math.PI / 2 - cap, cap * 2, Math.PI / 2 - cap, cap * 2)),
-      new THREE.MeshBasicMaterial({ map: Wisp.faceTexture(info, this.color), transparent: true, alphaTest: 0.04 }),
+    // Rounded head. Hair is a solid volume over the forehead, not a cap stuck on the back.
+    // Longer styles continue that volume down to the shoulders.
+    this.head.position.y = 1.28;
+    const skull = part(sharedGeo("skull", () => new THREE.SphereGeometry(0.2, MOBILE ? 12 : 24, MOBILE ? 10 : 18)), skin, 0.01, this.head);
+    skull.scale.set(0.96, 1.02, 0.9);
+    skull.position.z = 0.02;
+    const style = info.hairStyle ?? 0;
+    const long = style === 1 || style === 2 || style === 3 || style === 6;
+    const covered = style === 7 || style === 8;
+    const segs = MOBILE ? 10 : 18;
+    const crown = part(
+      sharedGeo("hair-crown" + (long ? "-long" : ""), () => new THREE.SphereGeometry(long ? 0.268 : 0.236, segs, MOBILE ? 8 : 14)),
+      hair,
+      long ? 0.07 : 0.055,
+      this.head,
     );
-    this.mats.push(face.material as THREE.Material);
-    face.renderOrder = 2;
-    this.head.add(face);
+    crown.scale.set(long ? 1.04 : 1.0, long ? 0.78 : 0.72, long ? 0.98 : 1.02);
+    crown.position.set(0, long ? 0.1 : 0.085, long ? -0.07 : -0.055);
+    if (style === 5) crown.scale.set(1.0, 0.55, 1.04);
+    if (!covered) {
+      const fringe = part(
+        sharedGeo("hair-fringe-ball", () => new THREE.SphereGeometry(long ? 0.12 : 0.09, segs, MOBILE ? 8 : 12)),
+        hair,
+        0.09,
+        this.head,
+        style === 4 ? 0.04 : 0,
+        0.12,
+      );
+      fringe.scale.set(long ? 1.25 : 1.35, long ? 0.72 : 0.78, 0.55);
+      for (const side of [-1, 1]) {
+        const temple = part(
+          sharedGeo("hair-temple", () => new THREE.SphereGeometry(0.07, segs, MOBILE ? 6 : 10)),
+          hair,
+          0.02,
+          this.head,
+          side * (style === 4 ? 0.12 : 0.155) + (style === 4 ? 0.02 : 0),
+          0.04,
+        );
+        temple.scale.set(0.72, 1.25, 0.85);
+      }
+    }
+    if (long) {
+      for (const side of [-1, 1]) {
+        const lock = part(capsule(0.07, 0.46, "hair-lock"), hair, -0.16, this.head, side * 0.19, 0.04);
+        lock.rotation.z = side * -0.12;
+        lock.rotation.x = 0.18;
+      }
+      const fall = part(sharedGeo("hair-fall", () => new THREE.SphereGeometry(0.18, segs, MOBILE ? 6 : 10)), hair, -0.18, this.head, 0, -0.05);
+      fall.scale.set(1.15, 1.7, 0.48);
+    }
+    if (style === 2) part(sharedGeo("hair-bun", () => new THREE.SphereGeometry(0.08, segs, MOBILE ? 6 : 10)), hair, 0.22, this.head, 0, -0.01);
+    if (style === 7) {
+      const band = part(sharedGeo("hair-turban", () => new THREE.TorusGeometry(0.16, 0.055, MOBILE ? 6 : 8, MOBILE ? 12 : 18)), hair, 0.03, this.head);
+      band.rotation.x = Math.PI / 2;
+    }
+    if (style === 8) {
+      for (const side of [-1, 1]) part(capsule(0.09, 0.42, "hair-hijab"), hair, -0.14, this.head, side * 0.15, 0.03);
+    }
+    const eyeWhite = mat("#fff8f4", { roughness: 0.35 });
+    const pupil = mat("#241820", { roughness: 0.3 });
+    const catchlight = mat("#ffffff", { roughness: 0.2, emissive: "#ffffff", emissiveIntensity: 0.35 });
+    for (const side of [-1, 1]) {
+      const eye = part(sharedGeo("eye-white", () => new THREE.SphereGeometry(0.036, MOBILE ? 8 : 14, MOBILE ? 6 : 12)), eyeWhite, 0.012, this.head, side * 0.07, 0.185);
+      eye.scale.set(1.2, 1.05, 0.42);
+      const dot = part(sharedGeo("eye-pupil", () => new THREE.SphereGeometry(0.016, MOBILE ? 6 : 10, MOBILE ? 5 : 8)), pupil, 0.01, this.head, side * 0.07, 0.198);
+      dot.scale.z = 0.4;
+      part(sharedGeo("eye-light", () => new THREE.SphereGeometry(0.006, 6, 5)), catchlight, 0.02, this.head, side * 0.08, 0.204);
+    }
+    part(sharedGeo("nose", () => new THREE.SphereGeometry(0.028, MOBILE ? 6 : 10, MOBILE ? 5 : 8)), skin, -0.02, this.head, 0, 0.175).scale.set(0.75, 0.55, 0.65);
+    const smile = part(
+      sharedGeo("smile", () => new THREE.TorusGeometry(0.038, 0.008, MOBILE ? 4 : 6, MOBILE ? 8 : 12, Math.PI)),
+      mat("#c45b6e", { roughness: 0.45 }),
+      -0.07,
+      this.head,
+      0,
+      0.175,
+    );
+    smile.rotation.z = Math.PI;
+    smile.rotation.x = -0.35;
     this.root.add(this.head);
     this.group.add(this.root);
     // ground marker: soft shadow + ring in the person's colour

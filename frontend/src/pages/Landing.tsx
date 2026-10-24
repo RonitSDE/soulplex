@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, X, Sparkles, Coffee, HeartHandshake, Brain, ShieldCheck, Eye, Lock } from "lucide-react";
 import { api } from "../api";
 import { useStore } from "../store";
-import { Brand, Wisp, Ring, Meter } from "../ui";
+import { Brand, Wisp } from "../ui";
 import { withWorld } from "../world/WorldCanvas";
 import { faceUrl, headUrl, bodyColors, type FaceSpec } from "../faces";
 
@@ -170,7 +170,7 @@ export function Landing() {
             <HeartHandshake />
             <h3>You decide to meet</h3>
             <p>
-              Replay the date, see your resonance score and add your own words. Contacts unlock only when
+              Replay the date, see what you actually have in common, and add your own words. Contacts unlock only when
               <b> both humans</b> accept.
             </p>
           </article>
@@ -203,20 +203,14 @@ export function Landing() {
             </div>
           </div>
           <div className="mock-body">
-            <Ring value={82} size={120} label="resonance" />
+            <div className="why-click">
+              <strong>Why you might click</strong>
+              <p>You both mentioned kindness, from facts each of you approved.</p>
+              <p className="fine">A guidance score does not decide the introduction.</p>
+            </div>
             <div className="mock-bars">
-              {[
-                ["Values", 91],
-                ["Lifestyle", 86],
-                ["Communication", 88],
-                ["Future", 64],
-                ["Interests", 79],
-              ].map(([k, v]) => (
-                <label key={k}>
-                  <span>{k}</span>
-                  <Meter value={+v} />
-                </label>
-              ))}
+              <p>“I value kindness and honest communication.”</p>
+              <p className="fine">Quoted from an approved fact, not a generated trait.</p>
             </div>
           </div>
           <p className="mock-tip">

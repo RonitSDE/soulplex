@@ -3,6 +3,7 @@ import { Download, Trash2, LogOut, Mail, Save, ShieldCheck, Ban, Check, RotateCc
 import { api, STATIC } from "../api";
 import { useStore } from "../store";
 import { Panel, Head } from "./Shell";
+import { ProfileEditor } from "./ProfileEditor";
 
 const GENDERS = [
   ["woman", "Women"],
@@ -16,6 +17,13 @@ export function Settings() {
   const [p, setP] = useState({ ...user! });
   const [pw, setPw] = useState("");
   const [delAsk, setDelAsk] = useState(false);
+  const [editor, setEditor] = useState(false);
+  const [perms, setPerms] = useState<{ id: string; label: string }[]>([]);
+  const [grants, setGrants] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    api<{ consents: { id: string; label: string }[] }>("/onboarding/schema").then((s) => setPerms(s.consents)).catch(() => {});
+    api<{ grants: Record<string, boolean> }>("/privacy/permissions").then((p) => setGrants(p.grants)).catch(() => {});
+  }, [user?.id]);
   useEffect(() => setP({ ...user! }), [user]);
   const set = (k: string, v: unknown) => setP({ ...p, [k]: v });
   return (
@@ -70,6 +78,7 @@ export function Settings() {
               <option value="man">Man</option>
               <option value="nonbinary">Non-binary</option>
               <option value="self-described">I describe my gender another way</option>
+              <option value="prefer_not">Prefer not to say</option>
             </select>
           </label>
         </div>
@@ -133,6 +142,36 @@ export function Settings() {
       </form>
 
       <section className="glass card">
+        <h3>Twin Permission Center</h3>
+        <p className="fine">Optional uses stay off until you turn them on. Revoking stops new virtual dates.</p>
+        {perms.map((c) => (
+          <label key={c.id} className="switch big">
+            <input type="checkbox" checked={!!grants[c.id]} onChange={(e) => setGrants({ ...grants, [c.id]: e.target.checked })} />
+            <i />
+            <span>{c.label}</span>
+          </label>
+        ))}
+        <div className="btn-row">
+          <button className="btn primary sm" type="button" disabled={busy} onClick={() => perform(async () => {
+            const saved = await api<{ grants: Record<string, boolean> }>("/privacy/permissions", "PUT", { grants });
+            setGrants(saved.grants);
+          }, "Permissions saved.")}>Save permissions</button>
+          <button className="btn ghost sm" type="button" disabled={busy} onClick={() => perform(async () => {
+            await api("/privacy/revoke", "POST");
+            const saved = await api<{ grants: Record<string, boolean> }>("/privacy/permissions");
+            setGrants(saved.grants);
+            await load();
+          }, "Future sharing and virtual dates are stopped.")}>Withdraw consent</button>
+          <button className="btn ghost sm" type="button" disabled={busy} onClick={() => perform(async () => {
+            const status = await api<{ identity_status: string }>("/trust/identity", "POST");
+            notify(status.identity_status === "verified" ? "Identity is already verified." : "Identity check requested. An operator reviews it.");
+          })}>Request identity check</button>
+          <button className="btn ghost sm" type="button" onClick={() => setEditor(true)}>Edit saved lifestyle profile</button>
+        </div>
+        {editor && <ProfileEditor onClose={() => setEditor(false)} />}
+      </section>
+
+      <section className="glass card">
         <h3>Invitations</h3>
         <label className="switch big">
           <input
@@ -148,7 +187,7 @@ export function Settings() {
           <i />
           <span>
             <b>Let my agent accept invitations automatically</b>
-            <small className="fine"> Turn off to approve each date invitation yourself first.</small>
+            <small className="fine"> Off unless you turn it on. Your twin will not accept a virtual date by itself.</small>
           </span>
         </label>
       </section>
@@ -301,7 +340,7 @@ export function Operator() {
               {d.members.map((m: any) => (
                 <div key={m.id} className="tr">
                   <span>
-                    <b>{m.name}</b> <small>{m.city}{m.synthetic ? " · fictional" : ""}</small>
+                    <b>{m.name}</b> <small>{m.city}{m.synthetic ? " · fictional" : ""}{m.flags?.length ? " · " + m.flags.join(" ") : ""}</small>
                   </span>
                   <span className={"tag " + (m.verified ? "ok" : "")}>{m.verified ? "verified" : "unverified"}</span>
                   {m.disabled && <span className="tag warn">suspended</span>}

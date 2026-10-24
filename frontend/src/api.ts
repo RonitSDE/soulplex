@@ -166,9 +166,16 @@ export type Experience = {
   other: { contribution: string; decision: string; next_step: string };
   mutual: boolean;
   contact: string | null;
-  /** True when the date score is high enough to offer a real connection. */
+  /** A completed date can move to a human introduction. The guidance score does not decide this. */
   can_connect?: boolean;
-  match_line?: number;
+  match_line?: number | null;
+  click?: {
+    title: string;
+    note: string;
+    shared: { yours: string; theirs: string; words: string[] }[];
+    differences: { yours: string; theirs: string }[];
+    moments: string[];
+  };
   mind_ready?: boolean;
 };
 export type Insights = {

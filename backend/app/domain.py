@@ -5,6 +5,7 @@ from .db import User, Memory, Block, Scene, Participation
 from .faces import view as face_view
 from .about import violates, completion
 from .date_types import spot_for
+from .studio import cities_fit, external_allowed, guidance_text, matching_allowed, why_click
 
 
 def scene_key(a, b, venue, a_version, b_version):
@@ -59,6 +60,9 @@ def own_profile(u):
         "about": dict(u.about or {}),
         "about_complete": completion(u.about or {}),
         "auto_accept": u.auto_accept is not False,
+        "age_verified": bool(getattr(u, "age_verified", False)),
+        "identity_status": getattr(u, "identity_status", None) or "unverified",
+        "studio": dict(getattr(u, "studio", None) or {}),
         "public_dates": bool(u.public_dates),
         "email": u.email,
         "gender": u.gender,
@@ -116,7 +120,9 @@ def base_ok(db, a, b):
         and b.email_verified
         and a.age >= 18
         and b.age >= 18
-        and a.city == b.city
+        and cities_fit(a, b)
+        and matching_allowed(db, a)
+        and matching_allowed(db, b)
         and intents_fit(a.intent, b.intent)
         and b.gender in a.seeking
         and a.gender in b.seeking
@@ -172,7 +178,8 @@ def actor_data(db, u):
                 else 1,
             )[:16]
         ],
-        "mind_id": u.mind_id or "",
+        "mind_id": (u.mind_id or "") if external_allowed(db, u) else "",
+        "guidance": [item["content"] for item in guidance_text(db, u.id) if not item["disclose"]],
         "intent": u.intent,
         "city": u.city,
         "age_min": u.age_min,
@@ -246,8 +253,15 @@ def scene_data(db, s, user):
         },
         "mutual": mutual,
         "contact": partner.contact if mutual else None,
-        "match_line": _match_line(),
-        "can_connect": _can_connect(output),
+        "match_line": None,
+        "can_connect": s.status == "completed" and not changed,
+        "click": why_click(
+            [m.content for m in memories(db, user.id, True)],
+            [m.content for m in memories(db, partner.id, True)],
+            [line.get("text", "") for line in (output.get("dialogue") or [])],
+        )
+        if s.status == "completed" and not changed
+        else None,
     }
 
 
@@ -258,5 +272,5 @@ def _match_line():
 
 
 def _can_connect(output):
-    score = (output.get("assessment") or {}).get("score")
-    return isinstance(score, (int, float)) and not isinstance(score, bool) and score >= _match_line()
+    """A resonance score is guidance. It does not open or close an introduction."""
+    return True

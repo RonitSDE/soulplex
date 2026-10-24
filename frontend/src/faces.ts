@@ -73,18 +73,17 @@ export function avatarSVG(specIn: Partial<FaceSpec>, hue = 320, seed = "x", head
   p.push(`<defs><radialGradient id="g" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="${bg1}"/><stop offset="1" stop-color="${bg2}"/></radialGradient>
   <clipPath id="c"><circle cx="60" cy="60" r="60"/></clipPath></defs>`);
   p.push(headOnly ? `<g>` : `<g clip-path="url(#c)"><rect width="120" height="120" fill="url(#g)"/>`);
-  // back hair / covering
-  if (s.hair === 1) p.push(`<path d="M30 50 Q30 20 60 20 Q90 20 90 50 L93 104 Q60 112 27 104 Z" fill="${hc}"/>`);
-  if (s.hair === 6) p.push(`<path d="M29 52 Q27 20 60 20 Q93 20 91 52 Q96 74 87 88 L33 88 Q24 74 29 52Z" fill="${hc}"/>`);
-  if (s.hair === 2) p.push(`<circle cx="60" cy="21" r="12" fill="${hc}"/>`);
-  if (s.hair === 8 && !headOnly) p.push(`<path d="M25 62 Q22 16 60 14 Q98 16 95 62 Q97 94 106 124 L14 124 Q23 94 25 62Z" fill="${out}"/><path d="M25 62 Q22 16 60 14 Q98 16 95 62 Q97 94 106 124 L14 124 Q23 94 25 62Z" fill="#000" opacity=".12"/>`);
-  // shoulders + neck
-  if (!headOnly) p.push(`<path d="M16 124 Q20 92 60 89 Q100 92 104 124Z" fill="${out}"/>`);
-  if (s.hair !== 8 && !headOnly) p.push(`<rect x="51" y="74" width="18" height="20" rx="6" fill="${skin}"/><rect x="51" y="74" width="18" height="20" rx="6" fill="#000" opacity=".13"/>`);
-  // ears
-  if (s.hair !== 8) p.push(`<ellipse cx="36" cy="59" rx="5" ry="7" fill="${skin}"/><ellipse cx="84" cy="59" rx="5" ry="7" fill="${skin}"/>`);
-  // face
-  p.push(`<ellipse cx="60" cy="56" rx="24" ry="28" fill="${skin}"/>`);
+  // The 3D head already has a skin skull and a hair cap, so its texture is only the features.
+  if (!headOnly) {
+    if (s.hair === 1) p.push(`<path d="M30 50 Q30 20 60 20 Q90 20 90 50 L93 104 Q60 112 27 104 Z" fill="${hc}"/>`);
+    if (s.hair === 6) p.push(`<path d="M29 52 Q27 20 60 20 Q93 20 91 52 Q96 74 87 88 L33 88 Q24 74 29 52Z" fill="${hc}"/>`);
+    if (s.hair === 2) p.push(`<circle cx="60" cy="21" r="12" fill="${hc}"/>`);
+    if (s.hair === 8) p.push(`<path d="M25 62 Q22 16 60 14 Q98 16 95 62 Q97 94 106 124 L14 124 Q23 94 25 62Z" fill="${out}"/><path d="M25 62 Q22 16 60 14 Q98 16 95 62 Q97 94 106 124 L14 124 Q23 94 25 62Z" fill="#000" opacity=".12"/>`);
+    p.push(`<path d="M16 124 Q20 92 60 89 Q100 92 104 124Z" fill="${out}"/>`);
+    if (s.hair !== 8) p.push(`<rect x="51" y="74" width="18" height="20" rx="6" fill="${skin}"/><rect x="51" y="74" width="18" height="20" rx="6" fill="#000" opacity=".13"/>`);
+    if (s.hair !== 8) p.push(`<ellipse cx="36" cy="59" rx="5" ry="7" fill="${skin}"/><ellipse cx="84" cy="59" rx="5" ry="7" fill="${skin}"/>`);
+    p.push(`<ellipse cx="60" cy="56" rx="24" ry="28" fill="${skin}"/>`);
+  }
   // front hair
   const front: Record<number, string> = {
     0: `<path d="M35 52 Q34 23 60 23 Q87 23 85 52 Q81 36 66 34 Q50 33 42 40 Q37 45 35 52Z" fill="${hc}"/>`,
@@ -96,10 +95,12 @@ export function avatarSVG(specIn: Partial<FaceSpec>, hue = 320, seed = "x", head
     7: `<path d="M31 47 Q29 15 60 13 Q91 15 89 47 Q77 33 60 33 Q43 33 31 47Z" fill="${out}"/><path d="M33 40 Q60 22 87 40 M38 30 Q62 16 84 31" stroke="#000" stroke-opacity=".18" stroke-width="2.4" fill="none"/>`,
     8: `<ellipse cx="60" cy="56" rx="26.5" ry="30.5" fill="none" stroke="${out}" stroke-width="4"/>`,
   };
-  if (s.hair === 3) {
-    const curls = [[38, 44], [40, 34], [48, 27], [58, 24], [68, 25], [77, 29], [83, 37], [85, 46], [44, 30], [64, 30]];
-    p.push(curls.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="8" fill="${hc}"/>`).join(""));
-  } else p.push(front[s.hair] ?? front[0]);
+  if (!headOnly) {
+    if (s.hair === 3) {
+      const curls = [[38, 44], [40, 34], [48, 27], [58, 24], [68, 25], [77, 29], [83, 37], [85, 46], [44, 30], [64, 30]];
+      p.push(curls.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="8" fill="${hc}"/>`).join(""));
+    } else p.push(front[s.hair] ?? front[0]);
+  }
   // brows
   const brow = [
     `<path d="M45 44 Q50 41 55 43 M65 43 Q70 41 75 44" stroke="${hc}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
@@ -108,13 +109,20 @@ export function avatarSVG(specIn: Partial<FaceSpec>, hue = 320, seed = "x", head
   ][s.brows];
   p.push(brow);
   // eyes
-  p.push(
-    [
-      `<circle cx="50" cy="53" r="3.2" fill="#2a1a22"/><circle cx="70" cy="53" r="3.2" fill="#2a1a22"/><circle cx="51" cy="52" r="1" fill="#fff"/><circle cx="71" cy="52" r="1" fill="#fff"/>`,
-      `<circle cx="50" cy="53" r="3.2" fill="#2a1a22"/><circle cx="70" cy="53" r="3.2" fill="#2a1a22"/><path d="M45.5 50.5 L47 49 M74.5 50.5 L73 49" stroke="#2a1a22" stroke-width="1.6" stroke-linecap="round"/><circle cx="51" cy="52" r="1" fill="#fff"/><circle cx="71" cy="52" r="1" fill="#fff"/>`,
-      `<path d="M46 54 Q50 49.5 54 54 M66 54 Q70 49.5 74 54" stroke="#2a1a22" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
-    ][s.eyes],
-  );
+  const eye = (lashes: boolean, smile: boolean) => {
+    const white = `<ellipse cx="50" cy="53" rx="7.2" ry="6" fill="#fffef8"/><ellipse cx="70" cy="53" rx="7.2" ry="6" fill="#fffef8"/>`;
+    const iris = smile
+      ? ""
+      : `<circle cx="50.6" cy="53.4" r="3.3" fill="#2a1a22"/><circle cx="70.6" cy="53.4" r="3.3" fill="#2a1a22"/><circle cx="51.7" cy="52.2" r="1.15" fill="#fff"/><circle cx="71.7" cy="52.2" r="1.15" fill="#fff"/>`;
+    const lid = smile
+      ? `<ellipse cx="50" cy="55.5" rx="6.2" ry="3.4" fill="#fffef8"/><ellipse cx="70" cy="55.5" rx="6.2" ry="3.4" fill="#fffef8"/><circle cx="50.4" cy="56" r="1.7" fill="#2a1a22"/><circle cx="70.4" cy="56" r="1.7" fill="#2a1a22"/><path d="M43.5 54.5 Q50 47 56.5 54.5 M63.5 54.5 Q70 47 76.5 54.5" stroke="#2a1a22" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+      : "";
+    const lash = lashes
+      ? `<path d="M43 49 Q50 45.6 57 49 M63 49 Q70 45.6 77 49" stroke="#2a1a22" stroke-width="1.7" fill="none" stroke-linecap="round"/>`
+      : "";
+    return smile ? lid : white + iris + lash;
+  };
+  p.push([eye(false, false), eye(true, false), eye(false, true)][s.eyes]);
   // cheeks + mouth
   p.push(`<circle cx="44" cy="63" r="4.5" fill="#ff7a8a" opacity=".22"/><circle cx="76" cy="63" r="4.5" fill="#ff7a8a" opacity=".22"/>`);
   p.push(
@@ -136,7 +144,8 @@ export function avatarSVG(specIn: Partial<FaceSpec>, hue = 320, seed = "x", head
   if (s.accessory === 4)
     p.push(`<g transform="translate(80 32)"><circle r="4" cx="-4" fill="#ff8fb8"/><circle r="4" cx="4" fill="#ff8fb8"/><circle r="4" cy="-4" fill="#ffb3d1"/><circle r="4" cy="4" fill="#ffb3d1"/><circle r="2.6" fill="#ffd58a"/></g>`);
   p.push(`</g>`);
-  const box = headOnly ? "22 12 76 76" : "0 0 120 120";
+  // Tight on the face so a 3D head shows eyes and mouth, not a hair ring around a tiny mask.
+  const box = headOnly ? "32 31 56 56" : "0 0 120 120";
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box}" width="256" height="256">${p.join("")}</svg>`;
 }
 
@@ -264,7 +273,8 @@ export function bodyColors(face: FaceView | undefined | null, seed: string, hue:
   const covered = s.hair === 7 || s.hair === 8;
   return {
     skin: SKIN[s.skin] ?? SKIN[2],
-    hair: covered ? OUTFIT[s.outfit] : s.hair === 5 ? SKIN[s.skin] : HAIR_COLOR[s.hairColor] ?? HAIR_COLOR[0],
+    hair: covered ? OUTFIT[s.outfit] : HAIR_COLOR[s.hairColor] ?? HAIR_COLOR[0],
+    hairStyle: s.hair,
     outfit: OUTFIT[s.outfit] ?? OUTFIT[0],
   };
 }

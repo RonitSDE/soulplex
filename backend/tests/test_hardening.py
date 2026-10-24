@@ -208,10 +208,10 @@ def test_upgrade_from_v1_preserves_existing_scene(tmp_path, monkeypatch):
     database.init_db()
     database.init_db()  # Safe to run twice after a restart.
     with engine.connect() as conn:
-        assert conn.scalar(select(database.SchemaVersion.version)) == 7
+        assert conn.scalar(select(database.SchemaVersion.version)) == 8
         cols = [c["name"] for c in inspect(conn).get_columns("users")]
         assert "face" in cols and "about" in cols and "auto_accept" in cols and "public_dates" in cols
-        assert "mind_id" in cols and "mind_email" in cols
+        assert "mind_id" in cols and "mind_email" in cols and "studio" in cols and "age_verified" in cols
         assert "waived_by" in [c["name"] for c in inspect(conn).get_columns("scenes")]
         row = conn.execute(select(Scene.dedupe_key).where(Scene.id == "old")).scalar()
         assert row == domain.scene_key("a", "b", "cafe", 1, 1)

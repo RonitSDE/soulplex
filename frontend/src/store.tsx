@@ -205,7 +205,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (before === undefined || before === next.get(s.id)) continue;
         if (s.mutual && !before.endsWith(":mutual")) notify(`It's mutual! You and ${s.partner.name} both want to meet 💞`);
         else if (s.status === "completed" && !before.startsWith("completed"))
-          notify(`Your agent is back from a date with ${s.partner.name}: ${s.output.assessment?.score ?? "?"}% resonance.`);
+          notify(`Your agent is back from a date with ${s.partner.name}. See why you might click.`);
       }
     }
     seen.current = next;

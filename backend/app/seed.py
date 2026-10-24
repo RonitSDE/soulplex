@@ -164,6 +164,7 @@ def seed():
                 synthetic=False,
                 public_dates=key != "operator",  # fictional members: anyone may watch their dates
                 role="admin" if key == "operator" else "member",
+                auto_accept=True,
                 memory_version=1,
                 face={"kind": "illustrated", "spec": faces.get(key, {})},
                 about=ABOUT.get(key, {}),

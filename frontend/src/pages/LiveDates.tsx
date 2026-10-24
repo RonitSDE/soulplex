@@ -205,7 +205,7 @@ export function LiveDates({
             {d.avg_resonance ?? "-"}
             {d.avg_resonance != null && "%"}
           </b>
-          <small>avg resonance today</small>
+          <small title="A conversation aid. It does not decide who can meet.">guidance, not a decision</small>
         </div>
       </div>
       {island && onIsland && (

@@ -29,6 +29,7 @@ import { LiveDates } from "./LiveDates";
 import { ProfileSheet } from "./Discover";
 import { vitals, PROMPTS } from "../about";
 import { faceUrl, headUrl, bodyColors } from "../faces";
+import { CoachCard } from "./Studio";
 
 const replayed = new Set<string>();
 
@@ -234,6 +235,8 @@ function DateList() {
           <option value="score">Best resonance</option>
         </select>
       </div>
+      <CoachCard trigger="pre_introduction" />
+      <CoachCard trigger="pre_date" />
       <div className="tabs scroll">
         {STATUS_TABS.map(([k, l]) => (
           <button key={k} className={status === k ? "on" : ""} onClick={() => setStatus(k)}>
@@ -347,12 +350,29 @@ function Process({ s, stage, lines }: { s: Experience; stage: number; lines: { s
 
 function Resonance({ s }: { s: Experience }) {
   const a = s.output.assessment!;
+  const click = s.click;
   return (
     <section className="resonance reveal">
+      {click && (
+        <div className="why-click">
+          <h3>{click.title}</h3>
+          <p className="fine">{click.note}</p>
+          {click.shared.map((item) => (
+            <p key={item.yours}><b>In common:</b> {item.yours} <span className="fine">They said: {item.theirs}</span></p>
+          ))}
+          {!click.shared.length && <p>No approved fact in common yet. That is unknown, not a poor match.</p>}
+          {click.differences.map((item) => (
+            <p key={item.yours}><b>A difference, not a flaw:</b> you shared “{item.yours}”.</p>
+          ))}
+          {click.moments.map((line) => (
+            <blockquote key={line}>{line}</blockquote>
+          ))}
+        </div>
+      )}
       <div className="res-top">
-        <Ring value={a.score} size={132} label="resonance" sub={a.confidence + " confidence"} />
+        <Ring value={a.score} size={96} label="guidance" sub="not a decision" />
         <div>
-          <h3>How your agents connected</h3>
+          <h3>How the conversation went</h3>
           <p className="fine">
             Based only on what you both chose to share.{" "}
             {a.method === "minds"
@@ -607,18 +627,10 @@ function YourTurn({ s }: { s: Experience }) {
               before you can accept.
             </p>
           )}
-          {s.can_connect === false && (
-            <p className="warn-line">
-              This date scored {s.output.assessment?.score ?? "—"}%. A connection opens at {s.match_line ?? 70}% or
-              above. You can still pass.
-            </p>
-          )}
           <div className="decide">
-            {s.can_connect !== false && (
               <button className="btn primary" disabled={busy || words.trim().length < 5} onClick={() => decide("accept")}>
                 <Heart size={16} /> I'd like to meet
               </button>
-            )}
             <button className="btn ghost" disabled={busy} onClick={() => decide("pending")}>
               Save words
             </button>
@@ -626,6 +638,19 @@ function YourTurn({ s }: { s: Experience }) {
               Not for me
             </button>
           </div>
+          <div className="studio-review">
+            <p className="eyebrow">Did your twin sound like you?</p>
+            <div className="w-chips">
+              {(["yes", "somewhat", "no"] as const).map((rating) => (
+                <button key={rating} type="button" onClick={() => perform(async () => {
+                  await api("/scenes/" + s.id + "/representation", "POST", { rating, note: words });
+                }, rating === "yes" ? "Saved. Nothing new was invented from this." : "Saved as feedback. A correction stays private until you approve it.")}>
+                  {rating === "yes" ? "Yes" : rating === "somewhat" ? "Somewhat" : "Not like me"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <CoachCard trigger="post_date" />
           {s.mine.decision !== "pending" && (
             <p className="fine">
               You chose <b>{s.mine.decision === "accept" ? "to meet" : "to pass"}</b>.{" "}
@@ -922,6 +947,7 @@ function DateDetail({ s }: { s: Experience }) {
               <FastForward size={14} /> Skip to the reflection
             </button>
           )}
+          {done && <CoachCard trigger="cafe_bill" />}
           {done && s.output.assessment && <Resonance s={s} />}
           {done && <YourTurn s={s} />}
           {done && s.output.evidence && (
